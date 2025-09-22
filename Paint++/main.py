@@ -34,7 +34,10 @@ class MainWindow(QMainWindow):
         super().__init__()
 
         self.setWindowTitle("Paint++")
-        self.setFixedSize(400, 300)
+        self.resize(900, 600) # Better then fixed sized
+
+
+
 
 
     #### This method creates the dropdown menu for File #####

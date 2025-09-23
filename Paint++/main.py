@@ -37,7 +37,7 @@ class MainWindow(QMainWindow):
         self.resize(900, 600) # Better then fixed sized
 
 
-
+# this is a test-branch for git/pr
 
 
     #### This method creates the dropdown menu for File #####

@@ -85,6 +85,49 @@ class MainWindow(QMainWindow):
 
         edit_menu = menu.addMenu("&Edit")
 
+## 2.Clipboard (menu with the following options:Copy, paste and Cut)
+        edit_menu.addSection("Clipboard")
+
+
+        # Edit function
+        copy_action = QAction(
+            QIcon.fromTheme(
+                "Edit-Copy",
+                self.style().standardIcon(QStyle.StandardPixmap.SP_FileDialogDetailedView),
+            ),
+            "Copy",
+            self,
+        )
+        copy_action.setShortcut(QKeySequence.StandardKey.Copy) # copy function
+        copy_action.triggered.connect(self.toolbar_button_clicked)
+
+        paste_action = QAction(
+            QIcon.fromTheme(
+                "Edit-Paste",
+                self.style().standardIcon(QStyle.StandardPixmap.SP_FileDialogStart),
+            ),
+            "Paste",
+            self,
+        )
+        paste_action.setShortcut(QKeySequence.StandardKey.Paste) #paste function
+        paste_action.triggered.connect(self.toolbar_button_clicked)
+
+        cut_action = QAction(
+            QIcon.fromTheme(
+                "Edit-Cut",
+                self.style().standardIcon(QStyle.StandardPixmap.SP_FileDialogEnd),
+            ),
+            "Cut",
+            self,
+        )
+        cut_action.setShortcut(QKeySequence.StandardKey.Cut) #cut function
+        cut_action.triggered.connect(self.toolbar_button_clicked)
+
+        edit_menu.addAction(paste_action)
+        edit_menu.addAction(cut_action)
+        edit_menu.addAction(copy_action)
+
+
 
     def toolbar_button_clicked(self, s):
         print("click", s)

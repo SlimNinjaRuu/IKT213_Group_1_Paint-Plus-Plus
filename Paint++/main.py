@@ -1,7 +1,8 @@
+import os
 
 # imports different classes from the PyQt library
 from PyQt6.QtCore import QSize, Qt
-from PyQt6.QtGui import QAction, QIcon, QKeySequence
+from PyQt6.QtGui import QAction, QIcon, QKeySequence, QPixmap, QImageReader, QImageIOHandler, QImageWriter
 from PyQt6.QtWidgets import (
     QApplication,
     QWidget,
@@ -10,10 +11,11 @@ from PyQt6.QtWidgets import (
     QLabel,
     QCheckBox,
     QStatusBar,
-    QToolBar, QStyle,
+    QToolBar, QStyle, QFileDialog, QMessageBox, QScrollArea
 )
 
 import sys
+
 
 
 def main():
@@ -30,14 +32,27 @@ def main():
 
 
 class MainWindow(QMainWindow):
+
     def __init__(self):
         super().__init__()
-
         self.setWindowTitle("Paint++")
-        self.resize(900, 600) # Better then fixed sized
+        self.resize(900, 600)
+
+        self.image_label = QLabel("No image loaded", alignment=Qt.AlignmentFlag.AlignCenter)
+
+        self.scroll = QScrollArea()
+        self.scroll.setWidget(self.image_label)
+        self.scroll.setWidgetResizable(True)
+        self.setCentralWidget(self.scroll)
+
+        self.status = QStatusBar()
+        self.setStatusBar(self.status)
+
+        self.current_path = None
 
 
-# this is a test-branch for git/pr
+
+    # this is a test-branch for git/pr
 
 
     #### This method creates the dropdown menu for File #####
@@ -52,15 +67,17 @@ class MainWindow(QMainWindow):
 
         ##### Open file in File-menu #####
         open_ = QAction(self.style().standardIcon(QStyle.StandardPixmap.SP_DirOpenIcon), "Open", self)
-        open_.triggered.connect(self.toolbar_button_clicked)
+        open_.triggered.connect(self.open_file)
 
         ##### Save Button in File-menu #####
         save = QAction(self.style().standardIcon(QStyle.StandardPixmap.SP_DialogSaveButton), "Save", self)
-        save.triggered.connect(self.toolbar_button_clicked)
+        save.triggered.connect(self.save)
+        save.setShortcut(QKeySequence.StandardKey.Save)
 
         ##### Save as Button in File-menu #####
         save_as = QAction(self.style().standardIcon(QStyle.StandardPixmap.SP_DialogSaveButton), "Save as", self)
-        save_as.triggered.connect(self.toolbar_button_clicked)
+        save_as.triggered.connect(self.save_as)
+        save_as.setShortcut(QKeySequence.StandardKey.SaveAs)
 
         ##### Properties Button in File-menu
         properties = QAction(QIcon("icons/icons8-settings.svg"), "Settings", self)
@@ -132,6 +149,93 @@ class MainWindow(QMainWindow):
     def toolbar_button_clicked(self, s):
         print("click", s)
 
+
+    def current_qimage(self):
+        pm = self.image_label.pixmap()
+        if pm is None:
+            return None
+        return pm.toImage()
+
+    def write_image(self, path: str, fmt: bytes | None):
+        img = self.current_qimage()
+        if img is None:
+            QMessageBox.information(self, "Nothing to save", "Load or create an image first.")
+            return False
+
+        writer = QImageWriter(path, fmt if fmt else b"")
+        ok = writer.write(img)
+        if not ok:
+            QMessageBox.critical(self, "Save Failed", writer.errorString() or "Unkown error.")
+            return False
+
+        self.current_path = path
+        self.status.showMessage(f"Saved: {os.pathj.basename(path)}")
+        return True
+
+    def open_file(self):
+       fmts = sorted(set(bytes(f).decode("ascii").lower() for f in QImageReader.supportedImageFormats()))
+       file_filter = "Images (" + " ".join(f"*.{ext}" for ext in fmts) + ");;All Files (*)"
+
+       path, _ = QFileDialog.getOpenFileName(self, "Open Image", "", file_filter)
+       if not path:
+           return
+
+       reader = QImageReader(path)
+       reader.setAutoTransform(True)
+       img = reader.read()
+       if img.isNull():
+           QMessageBox.critical(self, "Open Image Failed", f"{reader.errorString()}\n\nFile: {path}")
+           return
+
+       pix = QPixmap.fromImage(img)
+       if pix.isNull():
+           QMessageBox.critical(self, "Open Image Failed", f"Loaded QImage but QPixmap is null. \nFile: {path}")
+           return
+
+       self.image_label.setPixmap(pix)
+       self.image_label.adjustSize()
+
+       name = os.path.basename(path)
+       self.status.showMessage(f"Opened: {name} -  {pix.width()}x{pix.height()} px")
+       self.setWindowTitle(f"Paint++ - {name}")
+
+
+    def save(self):
+        if not self.current_path:
+            self.save_as()
+            return
+
+        ext = os.path.splitext(self.current_path)[1].lower().lstrip(".")
+        fmt = ext.encode("ascii") if ext else None
+        self.write_image(self.current_path, fmt)
+
+    def save_as(self):
+        fmts = sorted(set(bytes(f).decode("ascii").lower() for f in QImageWriter.supportedImageFormats()))
+        pattern = " ".join(f"*.{ext}" for ext in fmts)
+        file_filter = f"Images ({pattern});;All Files (*)"
+
+        # Sugest same dir name when possible
+        suggested = self.current_path or ""
+        path, selected_filter = QFileDialog.getSaveFileName(self, "Save Image As", suggested, file_filter)
+        if not path:
+            return
+
+        # Ensure an extensinon, .png as default
+        root, ext = os.path.splitext(path)
+        if not ext:
+            ext = ".png"
+            path = root + ext
+
+
+        fmt = ext.lstrip(".").lower().encode("ascii")
+
+        if os.path.exists(path):
+            resp = QMessageBox.question(self, "Overwrite?", f"{os.path.basename(path)} exists. Overwrite?")
+            if resp != QMessageBox.StandardButton.Yes:
+                return
+
+        if self.write_image(path, fmt):
+            self.setWindowTitle(f"Paint++ - {os.path.basename(path)}")
 
 if __name__ == '__main__':
     main()

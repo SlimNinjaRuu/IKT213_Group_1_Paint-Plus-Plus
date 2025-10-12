@@ -1,0 +1,11 @@
+<!-- mirror-vertical.svg -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="48" height="48" aria-label="Mirror (vertical)">
+  <g fill="none" stroke="#f00" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">
+    <!-- mirror axis -->
+    <path d="M24 6v36" stroke-dasharray="4 4"/>
+    <!-- original shape (left) -->
+    <path d="M18 16l-8 8l8 8z"/>
+    <!-- mirrored shape (right) -->
+    <path d="M30 16l8 8l-8 8z"/>
+  </g>
+</svg>

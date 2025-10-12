@@ -1,0 +1,13 @@
+<!-- resize-diagonal.svg -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="48" height="48" aria-label="Resize">
+  <g fill="none" stroke="#f00" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">
+    <!-- Diagonal shaft -->
+    <path d="M16 32 L32 16" />
+    <!-- Arrowhead NE -->
+    <path d="M32 16 L32 24" />
+    <path d="M32 16 L24 16" />
+    <!-- Arrowhead SW -->
+    <path d="M16 32 L16 24" />
+    <path d="M16 32 L24 32" />
+  </g>
+</svg>

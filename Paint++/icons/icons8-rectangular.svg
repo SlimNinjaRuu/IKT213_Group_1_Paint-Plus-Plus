@@ -1,0 +1,6 @@
+<!-- select-rect-red.svg -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="48" height="48" aria-label="Rectangular selection">
+  <g fill="none" stroke="#f00" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">
+    <rect x="10" y="12" width="28" height="24"/>
+  </g>
+</svg>

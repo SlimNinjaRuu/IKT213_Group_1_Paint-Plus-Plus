@@ -1,0 +1,8 @@
+<!-- select-lasso-red.svg -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="48" height="48" aria-label="Lasso selection">
+  <g fill="none" stroke="#f00" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M10 22c0-6 6-10 14-10s14 4 14 10-6 10-14 10c-5 0-9-1.8-11.5-4.5" />
+    <path d="M12 28c-2 2-2 5 0 7" />
+    <path d="M12 35l0 .01" />
+  </g>
+</svg>

@@ -1,6 +1,9 @@
+# Install pyqt6,pyqt6-tools
 import os
 
 # imports different classes from the PyQt library
+from PyQt6.QtCore import QSizeF, QSize
+from PyQt6 import QtGui
 from PyQt6.QtCore import QSize, Qt
 from PyQt6.QtGui import QAction, QIcon, QKeySequence, QPixmap, QImageReader, QImageIOHandler, QImageWriter
 from PyQt6.QtWidgets import (
@@ -11,8 +14,9 @@ from PyQt6.QtWidgets import (
     QLabel,
     QCheckBox,
     QStatusBar,
-    QToolBar, QStyle, QFileDialog, QMessageBox, QScrollArea
+    QToolBar, QStyle, QFileDialog, QMessageBox, QScrollArea, QVBoxLayout, QLayout
 )
+from img_canvas import Img_Canvas
 
 import sys
 
@@ -38,12 +42,29 @@ class MainWindow(QMainWindow):
         self.setWindowTitle("Paint++")
         self.resize(900, 600)
 
-        self.image_label = QLabel("No image loaded", alignment=Qt.AlignmentFlag.AlignCenter)
 
         self.scroll = QScrollArea()
-        self.scroll.setWidget(self.image_label)
+
+        container = QWidget()
+        layout = QVBoxLayout(container)
+
+        self.canvas = Img_Canvas(container)
+
+        layout.addWidget(self.canvas, alignment=Qt.AlignmentFlag.AlignCenter)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(0)
+
+
+        self.scroll.setWidget(container)
         self.scroll.setWidgetResizable(True)
         self.setCentralWidget(self.scroll)
+
+
+        #self.image_label = QLabel("No image loaded", alignment=Qt.AlignmentFlag.AlignCenter)
+        #self.scroll = QScrollArea()
+        #self.scroll.setWidget(self.image_label)
+        #self.scroll.setWidgetResizable(True)
+        #self.setCentralWidget(self.scroll)
 
         self.status = QStatusBar()
         self.setStatusBar(self.status)
@@ -162,7 +183,7 @@ class MainWindow(QMainWindow):
             QMessageBox.information(self, "Nothing to save", "Load or create an image first.")
             return False
 
-        writer = QImageWriter(path, fmt if fmt else b"")
+        writer = QImageWriter(path, fmt  if fmt else b"")
         ok = writer.write(img)
         if not ok:
             QMessageBox.critical(self, "Save Failed", writer.errorString() or "Unkown error.")
@@ -192,12 +213,16 @@ class MainWindow(QMainWindow):
            QMessageBox.critical(self, "Open Image Failed", f"Loaded QImage but QPixmap is null. \nFile: {path}")
            return
 
-       self.image_label.setPixmap(pix)
-       self.image_label.adjustSize()
 
        name = os.path.basename(path)
        self.status.showMessage(f"Opened: {name} -  {pix.width()}x{pix.height()} px")
        self.setWindowTitle(f"Paint++ - {name}")
+
+       self.canvas.set_image(pix)
+       vp = self.scroll.viewport().size()
+       desired = QSize(max(pix.width(), vp.width()), max(pix.height(), vp.height()))
+       self.canvas.resize(desired)
+       self.current_path = path
 
 
     def save(self):

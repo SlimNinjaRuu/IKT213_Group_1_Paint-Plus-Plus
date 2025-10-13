@@ -1,0 +1,10 @@
+<!-- rotate-90-left.svg -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="48" height="48" aria-label="Rotate 90 degrees left">
+  <g fill="none" stroke="#f00" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">
+    <!-- corner / pivot -->
+    <path d="M36 36V18H18" />
+    <!-- arrow head -->
+    <path d="M18 18l8-8" />
+    <path d="M18 18l8 8" />
+  </g>
+</svg>

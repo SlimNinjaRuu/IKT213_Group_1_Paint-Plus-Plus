@@ -1,7 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="Black">
+<<<<<<< HEAD
     <option name="sdkName" value="IKT213_Group_1_Paint-Plus-Plus" />
   </component>
   <component name="ProjectRootManager" version="2" project-jdk-name="IKT213_Group_1_Paint-Plus-Plus" project-jdk-type="Python SDK" />
+=======
+    <option name="sdkName" value="ikt213" />
+  </component>
+  <component name="ProjectRootManager" version="2" project-jdk-name="ikt213" project-jdk-type="Python SDK" />
+>>>>>>> 590fef964e19903bbc1fda55561c016e95ec94b1
 </project>

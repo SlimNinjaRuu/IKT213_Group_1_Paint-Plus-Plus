@@ -12,6 +12,7 @@ from PyQt6.QtWidgets import (
     QPushButton,
     QMainWindow,
     QLabel,
+    QMenu,
     QCheckBox,
     QStatusBar,
     QToolBar, QStyle, QFileDialog, QMessageBox, QScrollArea, QVBoxLayout, QLayout
@@ -32,6 +33,7 @@ def main():
     window.show() # IMPORTANT!!!!! Windows are hidden by default, so calle the show method
     window.file_menu()
     window.edit_menu()
+    window.image_menu()
     app.exec()
 
 
@@ -165,7 +167,38 @@ class MainWindow(QMainWindow):
         edit_menu.addAction(cut_action)
         edit_menu.addAction(copy_action)
 
+    def image_menu(self):
+        menu = self.menuBar()
+        image_menu = menu.addMenu("&Image")
 
+        select_menu = QMenu("&Select", self)
+        image_menu.addMenu(select_menu)
+
+        rectangular = QAction(QIcon("icons/icons8-rectangular.svg"), "Rectangular", self)
+        lasso = QAction(QIcon("icons/icons8-lasso.svg"), "Lasso", self)
+        polygon = QAction(QIcon("icons/icons8-polygon.svg"), "Polygon", self)
+
+        select_menu.addAction(rectangular)
+        select_menu.addAction(lasso)
+        select_menu.addAction(polygon)
+
+        crop = QAction(QIcon("icons/icons8-crop.svg"), "Crop", self)
+        resize = QAction(QIcon("icons/icons8-resize.svg"), "Resize", self)
+        image_menu.addAction(crop)
+        image_menu.addAction(resize)
+
+        orientation_menu = QMenu("&Orientation", self)
+        image_menu.addMenu(orientation_menu)
+
+        rotate_right = QAction(QIcon("icons/icons8-rotate_right.svg"), "Rotate right", self)
+        rotate_left = QAction(QIcon("icons/icons8-rotate_left.svg"), "Rotate left", self)
+        flip_horizontal = QAction(QIcon("icons/icons8-flip_horizontal.svg"), "Flip horizontal", self)
+        flip_vertical = QAction(QIcon("icons/icons8-flip_vertical.svg"), "Flip vertical", self)
+
+        orientation_menu.addAction(rotate_right)
+        orientation_menu.addAction(rotate_left)
+        orientation_menu.addAction(flip_horizontal)
+        orientation_menu.addAction(flip_vertical)
 
     def toolbar_button_clicked(self, s):
         print("click", s)

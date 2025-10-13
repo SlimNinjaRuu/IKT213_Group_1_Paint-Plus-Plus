@@ -1,5 +1,28 @@
-# Default ignored files
-/shelf/
-/workspace.xml
-# Editor-based HTTP Client requests
-/httpRequests/
+# --- JetBrains / PyCharm ---
+.idea/
+*.iml
+*.iws
+*.ipr
+
+# --- Python ---
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.so
+*.egg-info/
+.build/
+dist/
+.venv/
+.env
+.env.* 
+.pytest_cache/
+.mypy_cache/
+.dmypy.json
+.coverage
+.coverage.*
+htmlcov/
+
+# --- OS cruft ---
+.DS_Store
+Thumbs.db

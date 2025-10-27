@@ -42,7 +42,7 @@ class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("Paint++")
-        self.resize(900, 600)
+        self.resize(1920, 1080)
 
 
         self.scroll = QScrollArea()

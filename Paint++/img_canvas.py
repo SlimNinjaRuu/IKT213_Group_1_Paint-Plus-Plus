@@ -1,8 +1,8 @@
 
 # imports different classes from the PyQt library
 from PyQt6 import QtGui
-from PyQt6.QtCore import Qt, QPointF, QSize
 from PyQt6.QtGui import QPainter, QPixmap, QColor, QBrush
+from PyQt6.QtCore import Qt, QPoint, QSize
 
 from PyQt6.QtWidgets import (
     QApplication,
@@ -20,8 +20,13 @@ from PyQt6.uic.Compiler.qtproxies import QtWidgets
 class Img_Canvas(QWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
+
         self.image = None
         self._checker = self.make_checker_brush(tile=16)
+
+        self.offset = QPoint(0, 0)
+        self.panning = False
+        self.Last_pos = None
 
     def make_checker_brush(self, tile=16):
         light = QColor("#eeeeee")
@@ -39,6 +44,7 @@ class Img_Canvas(QWidget):
 
     def set_image(self, pix):
         self.image = pix
+        self.offset = QPoint(0, 0)
         self.resize(pix.size())
         self.update()
         print("[canvas] set_image:" , pix.size(), "null", pix.isNull())
@@ -54,12 +60,35 @@ class Img_Canvas(QWidget):
         x = (self.width() - self.image.width()) / 2
         y = (self.height() - self.image.height()) / 2
 
-        xi, yi = int(x), int(y)
+        xi = int(x + self.offset.x())
+        yi = int(y + self.offset.y())
         p.drawPixmap(xi, yi, self.image)
 
         p.setPen(QColor("#888888"))
-        p.drawRect(int(x), int(y), self.image.width()-1, self.image.height()-1)
+        p.drawRect(xi, yi, self.image.width()-1, self.image.height()-1)
 
 
     def sizeHint(self):
         return QSize(800, 600)
+
+
+    def mousePressEvent(self, event):
+        if event.button() == Qt.MouseButton.LeftButton:
+            self.panning = True
+            self.Last_pos = event.position().toPoint()
+            self.setCursor(Qt.CursorShape.ClosedHandCursor)
+
+    def mouseMoveEvent(self, event):
+        if self.panning and self.Last_pos is not None:
+            pos = event.position().toPoint()
+            delta = pos - self.Last_pos
+            self.offset += delta
+            self.Last_pos = pos
+            self.update()
+
+    def mouseReleaseEvent(self, event):
+        if event.button() == Qt.MouseButton.LeftButton:
+            self.panning = False
+            self.Last_pos = None
+            self.setCursor(Qt.CursorShape.ArrowCursor)
+

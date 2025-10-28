@@ -2,8 +2,6 @@
 import os
 
 # imports different classes from the PyQt library
-from PyQt6.QtCore import QSizeF, QSize
-from PyQt6 import QtGui
 from PyQt6.QtCore import QSize, Qt
 from PyQt6.QtGui import QAction, QIcon, QKeySequence, QPixmap, QImageReader, QImageIOHandler, QImageWriter
 from PyQt6.QtWidgets import (
@@ -56,8 +54,6 @@ class MainWindow(QMainWindow):
         self.setStatusBar(self.status)
 
         self.current_path = None                                    # Tracks current file path
-
-
 
     #### This method creates the dropdown menu for File #####
     def file_menu(self):
@@ -257,6 +253,7 @@ class MainWindow(QMainWindow):
        self.scroll.verticalScrollBar().setValue(0)
 
        self.current_path = path
+
 
 
     def save(self):

@@ -1,8 +1,11 @@
+from itertools import chain
 
 # imports different classes from the PyQt library
 from PyQt6 import QtGui
-from PyQt6.QtGui import QPainter, QPixmap, QColor, QBrush
-from PyQt6.QtCore import Qt, QPoint, QSize
+from PyQt6.QtGui import QPainter, QPixmap, QColor, QBrush, QPen, QImageReader
+from PyQt6.QtCore import Qt, QPoint, QSize, QRect
+import cv2
+import numpy as np
 
 from PyQt6.QtWidgets import (
     QApplication,
@@ -14,7 +17,7 @@ from PyQt6.QtWidgets import (
     QStatusBar,
     QToolBar, QStyle, QFileDialog, QMessageBox, QScrollArea, QInputDialog
 )
-from PyQt6.uic.Compiler.qtproxies import QtWidgets
+from numpy.ma.core import reshape
 
 
 ##### Inhertis from Qwidget ######
@@ -29,15 +32,13 @@ class Img_Canvas(QWidget):
         self.panning = False                                    # Is the image being dragged, Boolean value
         self.Last_pos = None                                    # Last Mouse position
 
+        self.selected = False
+        self.handle_size = 8
+        self.dragging_handle = None
+        self.resize_start_size = None
+        self.resize_start_pos = None
 
- 
-        self.image = None             
 
-        self.offset = QPoint(0, 0)
- 
-        self.image = None             
-        self.panning = False
-        self.Last_pos = None
 
     def make_checker_brush(self, tile=16):
         light = QColor("#eeeeee")
@@ -80,7 +81,11 @@ class Img_Canvas(QWidget):
         p.drawPixmap(xi, yi, self.image)                        # Draws the image with DrawPixmap
 
         # Draw border around the image
-        p.setPen(QColor("#888888"))
+        if self.selected:
+            p.setPen(QPen(QColor("#000000"), 3))
+        else:
+            p.setPen(QColor("#888888"))
+
         p.drawRect(xi, yi, self.image.width()-1, self.image.height()-1)
 
 
@@ -93,6 +98,30 @@ class Img_Canvas(QWidget):
     ##### Mouse Press (Start Dragging) #####
     def mousePressEvent(self, event):
         if event.button() == Qt.MouseButton.LeftButton:
+            if self.image is None:
+                return
+
+            click_pos = event.position().toPoint()
+
+            # Calculate image rectangle
+            x = (self.width() - self.image.width()) / 2
+            y = (self.height() - self.image.height()) / 2
+            xi = int(x + self.offset.x())
+            yi = int(y + self.offset.y())
+            image_rect = QRect(xi, yi, self.image.width(), self.image.height())
+
+            # Check if clickin inside image
+            if image_rect.contains(click_pos):
+                self.selected = True
+                self.panning = True
+                self.last_pos = click_pos
+                self.setCursor(Qt.CursorShape.ClosedHandCursor)
+                self.update()
+            else:
+                self.selected = False
+                self.update()
+
+
             self.panning = True                                 # Start Panning mode
             self.Last_pos = event.position().toPoint()          # Remember where we clicked
             self.setCursor(Qt.CursorShape.ClosedHandCursor)     # Change cursor to hand
@@ -130,6 +159,33 @@ class Img_Canvas(QWidget):
 
         self.resize(width, height)
         self.update()
+
+    ##### Convert QImage to Numpy array for OpenCV
+    def qimage_to_numpy(self, qimage):
+        width = qimage.width()
+        height = qimage.height()
+        ptr = qimage.bits()
+        bits = ptr.tobytes()
+        ptr.setsize(qimage.sizeInBytes())
+        arr = np.array(ptr, reshape(height, width, 4))  #RGBA
+
+        # Convert RGBA to BGR (OpenCV format)
+        bgr = cv.cvtColor(arr, cv.COLOR_BGR2RGB)
+        return bgr
+
+    def numpy_to_qimage(arr):
+
+        # Convert BGR to RGB
+        rgb = cv2.cvtColor(arr, cv2.COLOR_BGR2RGB)
+
+        height, width, channels = rgb.shape
+        bytes_per_line = 3 * width
+
+        q_img = QImage(rgb.data, width, height, bytes_per_line, QImage.Format.Format_RGB888)
+        return q_img.copy()
+
+
+
 
 
 

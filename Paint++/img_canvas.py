@@ -12,7 +12,7 @@ from PyQt6.QtWidgets import (
     QLabel,
     QCheckBox,
     QStatusBar,
-    QToolBar, QStyle, QFileDialog, QMessageBox, QScrollArea
+    QToolBar, QStyle, QFileDialog, QMessageBox, QScrollArea, QInputDialog
 )
 from PyQt6.uic.Compiler.qtproxies import QtWidgets
 
@@ -117,4 +117,21 @@ class Img_Canvas(QWidget):
             self.panning = False                                # Stop Panning mode
             self.Last_pos = None
             self.setCursor(Qt.CursorShape.ArrowCursor)          # Change back to normal cursor
+
+
+    ##### Allows User to Change he canvas Size
+    def resize_canvas(self):
+
+        width, ok1 = QInputDialog.getInt(self, "Canvas Width", "Enter Width", 800, 100, 5000 )
+        if not ok1:     # User Clicked cancel
+            return
+
+        height, ok2 = QInputDialog.getInt(self, "Canvas Height", "Enter Height", 800, 100, 5000 )
+        if not ok2:     # User Clicked Cancel
+            return
+
+        self.resize(width, height)
+        self.update()
+
+
 

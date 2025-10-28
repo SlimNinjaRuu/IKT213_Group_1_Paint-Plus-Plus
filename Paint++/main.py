@@ -30,7 +30,7 @@ def main():
 
     # creates an object from the QWidget class
     window = MainWindow()
-    window.show() # IMPORTANT!!!!! Windows are hidden by default, so calle the show method
+    window.show()
     window.file_menu()
     window.edit_menu()
     window.image_menu()
@@ -43,26 +43,6 @@ class MainWindow(QMainWindow):
         super().__init__()
         self.setWindowTitle("Paint++")
         self.resize(1920, 1080)
-
-
-        #self.scroll = QScrollArea()
-        #container = QWidget()
-        #layout = QVBoxLayout(container)
-        #self.canvas = Img_Canvas(container)
-        #layout.addWidget(self.canvas, alignment=Qt.AlignmentFlag.AlignCenter)
-        #layout.setContentsMargins(0, 0, 0, 0)
-        #layout.setSpacing(0)
-
-
-        #self.scroll.setWidget(container)
-        #self.scroll.setWidgetResizable(True)
-        #self.setCentralWidget(self.scroll)
-
-        #self.image_label = QLabel("No image loaded", alignment=Qt.AlignmentFlag.AlignCenter)
-        #self.scroll = QScrollArea()
-        #self.scroll.setWidget(self.image_label)
-        #self.scroll.setWidgetResizable(True)
-        #self.setCentralWidget(self.scroll)
 
         self.canvas = Img_Canvas()                                  # Creates an instance of the canvas class
         self.scroll = QScrollArea()                                 # Creates a scroll area
@@ -77,9 +57,6 @@ class MainWindow(QMainWindow):
 
         self.current_path = None                                    # Tracks current file path
 
-
-
-    # this is a test-branch for git/pr
 
 
     #### This method creates the dropdown menu for File #####
@@ -166,9 +143,14 @@ class MainWindow(QMainWindow):
         cut_action.setShortcut(QKeySequence.StandardKey.Cut) #cut function
         cut_action.triggered.connect(self.toolbar_button_clicked)
 
+        # Allows user to change the canvas size, uses the resize_canvas method from img_canvas
+        canvas_size = QAction(self.style().standardIcon(QStyle.StandardPixmap.SP_FileDialogDetailedView), "Canvas Size", self)
+        canvas_size.triggered.connect(self.canvas.resize_canvas)
+
         edit_menu.addAction(paste_action)
         edit_menu.addAction(cut_action)
         edit_menu.addAction(copy_action)
+        edit_menu.addAction(canvas_size)
 
     def image_menu(self):
         menu = self.menuBar()

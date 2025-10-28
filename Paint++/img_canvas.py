@@ -78,7 +78,7 @@ class Img_Canvas(QWidget):
         # Where the image drawn after the users dragged it (self.offset)
         xi = int(x + self.offset.x())
         yi = int(y + self.offset.y())
-        p.drawPixmap(xi, yi, self.image)
+        p.drawPixmap(xi, yi, self.image)                        # Draws the image with DrawPixmap
 
         # Draw border around the image
         if self.selected:

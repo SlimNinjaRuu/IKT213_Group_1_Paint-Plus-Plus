@@ -30,6 +30,16 @@ class Img_Canvas(QWidget):
         self.Last_pos = None                                    # Last Mouse position
 
 
+27
+ 
+        self.image = None             
+
+        self.offset = QPoint(0, 0)
+27
+ 
+        self.image = None             
+        self.panning = False
+        self.Last_pos = None
 
     def make_checker_brush(self, tile=16):
         light = QColor("#eeeeee")

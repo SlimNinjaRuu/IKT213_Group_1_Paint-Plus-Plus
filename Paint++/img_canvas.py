@@ -30,12 +30,10 @@ class Img_Canvas(QWidget):
         self.Last_pos = None                                    # Last Mouse position
 
 
-27
  
         self.image = None             
 
         self.offset = QPoint(0, 0)
-27
  
         self.image = None             
         self.panning = False

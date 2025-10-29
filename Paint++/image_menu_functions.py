@@ -2,6 +2,7 @@
 import cv2
 import numpy as np
 from PyQt6.QtGui import QPixmap, QImage
+from PyQt6.QtWidgets import QInputDialog, QMessageBox
 
 class imf:
     """Image manipulation tools for Paint++ (rotate, flip, resize, etc.)"""
@@ -78,10 +79,39 @@ class imf:
         self.canvas.set_image(self.cv2_to_qpixmap(crop_image))
 
     def resize(self):
+
         pix = self.canvas.pixmap()
-        if not pix or pix.isNull():
+
+        if self.canvas.image is None or self.canvas.image.isNull():
+            QMessageBox.information(None, "No Image, Image must be loaded first")
             return
-        cv = self.qpixmap_to_cv2(pix)
-        # Lag widget for å velge resize størrelse!
-        image_resize = cv2.resize(cv, (500, 500))
-        self.canvas.set_image(self.cv2_to_qpixmap(image_resize))
+
+        # Get current image dimensions
+        current_width = self.canvas.width()
+        current_height = self.canvas.height()
+
+        # Ask for new width
+        width, ok1 = QInputDialog.getInt(
+            None,
+            "Resize Image", f"Enter Width (current: {current_width}px:",
+            current_width,
+            1,  # minimum
+            10000  # maximum
+        )
+
+        if not ok1:  # User Canceld
+            return
+
+        height, ok2 = QInputDialog.getInt(
+            None, "Resize Image", f"Enter Height (current: {current_height}px:",
+            current_height,
+            1,
+            10000
+        )
+        if not ok2:  # User Cancelde
+            return
+
+        cv_image = self.qpixmap_to_cv2(pix)
+        resized_image = cv2.resize(cv_image, (width, height))
+        new_pixmap = self.cv2_to_qpixmap(resized_image)
+        self.canvas.set_image(new_pixmap)

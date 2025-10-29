@@ -9,17 +9,6 @@ class tools:
         self.canvas = canvas
         self.imf = imf_module or imf
 
-    # Zoom
-    def zoom(self):
-        pix = self.canvas.pixmap()
-        if not pix or pix.isNull():
-            return
-        cv = self.imf.qpixmap_to_cv2(pix)
-        # Factor is to be changed for zooming in/out
-        factor = 0.5
-        zoomed_img = cv2.resize(cv, None, fx=factor, fy=factor, interpolation=cv2.INTER_LINEAR)
-        self.canvas.set_image(self.imf.cv2_to_qpixmap(zoomed_img))
-
     @staticmethod
     def _lasso_mouse(event, x, y, flags, state):
         disp = state["disp"]

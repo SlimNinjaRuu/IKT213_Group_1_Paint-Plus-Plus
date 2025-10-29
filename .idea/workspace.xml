@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="AutoImportSettings">
+    <option name="autoReloadType" value="SELECTIVE" />
+  </component>
+  <component name="ChangeListManager">
+    <list default="true" id="3d484651-8040-42ef-b6b3-7b2286c5c8bf" name="Changes" comment="">
+      <change afterPath="$PROJECT_DIR$/Paint++/.idea/img_canvas.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Paint++/clipboard_functions.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Paint++/icons/icons8-draw.svg" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Paint++/icons/icons8-zoom.svg" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Paint++/img_canvas.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Paint++/test.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Paint++/tools_menu_functions.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Paint++/image_menu.py" beforeDir="false" afterPath="$PROJECT_DIR$/Paint++/image_menu_functions.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Paint++/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/Paint++/main.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Paint++/selection tools.py" beforeDir="false" afterPath="$PROJECT_DIR$/Paint++/selection_tools_functions.py" afterDir="false" />
+    </list>
+    <option name="SHOW_DIALOG" value="false" />
+    <option name="HIGHLIGHT_CONFLICTS" value="true" />
+    <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+    <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="FileTemplateManagerImpl">
+    <option name="RECENT_TEMPLATES">
+      <list>
+        <option value="Python Script" />
+      </list>
+    </option>
+  </component>
+  <component name="Git.Settings">
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
+  </component>
+  <component name="ProjectColorInfo">{
+  &quot;customColor&quot;: &quot;&quot;,
+  &quot;associatedIndex&quot;: 5
+}</component>
+  <component name="ProjectId" id="340PQZmoTYaYHM5loYsLycvD2l7" />
+  <component name="ProjectViewState">
+    <option name="hideEmptyMiddlePackages" value="true" />
+    <option name="showLibraryContents" value="true" />
+  </component>
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "Python.clipboard_functions.executor": "Run",
+    "Python.image_menu.executor": "Run",
+    "Python.img_canvas.executor": "Run",
+    "Python.main.executor": "Run",
+    "Python.selection tools.executor": "Run",
+    "Python.selection_tools_functions.executor": "Run",
+    "Python.test.executor": "Run",
+    "Python.tools_menu_functions.executor": "Run",
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252": "true",
+    "RunOnceActivity.git.unshallow": "true",
+    "git-widget-placeholder": "new-petter-branch-2",
+    "last_opened_file_path": "C:/Users/pette/IKT213_Group_1_Paint-Plus-Plus/Paint++",
+    "settings.editor.selected.configurable": "com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable"
+  }
+}]]></component>
+  <component name="RecentsManager">
+    <key name="CopyFile.RECENT_KEYS">
+      <recent name="C:\Users\pette\IKT213_Group_1_Paint-Plus-Plus\Paint++" />
+      <recent name="C:\Users\pette\IKT213_Group_1_Paint-Plus-Plus\Paint++\.idea" />
+      <recent name="C:\Users\pette\IKT213_Group_1_Paint-Plus-Plus\Paint++\icons" />
+    </key>
+    <key name="MoveFile.RECENT_KEYS">
+      <recent name="C:\Users\pette\IKT213_Group_1_Paint-Plus-Plus\Paint++" />
+    </key>
+  </component>
+  <component name="SharedIndexes">
+    <attachedChunks>
+      <set>
+        <option value="bundled-python-sdk-7e47963ff851-f0eec537fc84-com.jetbrains.pycharm.pro.sharedIndexes.bundled-PY-252.23892.515" />
+      </set>
+    </attachedChunks>
+  </component>
+  <component name="TaskManager">
+    <task active="true" id="Default" summary="Default task">
+      <changelist id="3d484651-8040-42ef-b6b3-7b2286c5c8bf" name="Changes" comment="" />
+      <created>1760347501360</created>
+      <option name="number" value="Default" />
+      <option name="presentableId" value="Default" />
+      <updated>1760347501360</updated>
+    </task>
+    <servers />
+  </component>
+  <component name="Vcs.Log.Tabs.Properties">
+    <option name="TAB_STATES">
+      <map>
+        <entry key="MAIN">
+          <value>
+            <State />
+          </value>
+        </entry>
+      </map>
+    </option>
+  </component>
+</project>

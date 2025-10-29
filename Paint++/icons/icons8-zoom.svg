@@ -1,0 +1,9 @@
+<!-- zoom.svg -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="48" height="48" aria-label="Zoom">
+  <g fill="none" stroke="#f00" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">
+    <!-- Circle (lens) -->
+    <circle cx="20" cy="20" r="10" />
+    <!-- Handle -->
+    <line x1="28" y1="28" x2="40" y2="40" />
+  </g>
+</svg>

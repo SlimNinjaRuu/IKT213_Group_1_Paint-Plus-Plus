@@ -1,12 +1,9 @@
-from itertools import chain
-
 # imports different classes from the PyQt library
 from PyQt6 import QtGui
-from PyQt6.QtGui import QPainter, QPixmap, QColor, QBrush, QPen, QImageReader
+from PyQt6.QtGui import QPainter, QPixmap, QColor, QBrush, QPen, QImage
 from PyQt6.QtCore import Qt, QPoint, QSize, QRect
 import cv2
 import numpy as np
-
 from PyQt6.QtWidgets import (
     QApplication,
     QWidget,
@@ -17,11 +14,11 @@ from PyQt6.QtWidgets import (
     QStatusBar,
     QToolBar, QStyle, QFileDialog, QMessageBox, QScrollArea, QInputDialog
 )
+
 from numpy.ma.core import reshape
 
 
 ##### Inhertis from Qwidget ######
-
 class Img_Canvas(QWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -63,6 +60,9 @@ class Img_Canvas(QWidget):
         self.resize(self.image.size())                          # Resize Widget to prefferd size
         self.update()                                           # Redraw to show new image
 
+    def pixmap(self):
+        """Return the currently displayed QPixmap."""
+        return self.image if self.image is not None and not self.image.isNull() else None
 
     def paintEvent(self, event):
         p = QPainter(self)
@@ -87,7 +87,6 @@ class Img_Canvas(QWidget):
             p.setPen(QColor("#888888"))
 
         p.drawRect(xi, yi, self.image.width()-1, self.image.height()-1)
-
 
     def sizeHint(self):
         if self.image is not None:
@@ -170,7 +169,7 @@ class Img_Canvas(QWidget):
         arr = np.array(ptr, reshape(height, width, 4))  #RGBA
 
         # Convert RGBA to BGR (OpenCV format)
-        bgr = cv.cvtColor(arr, cv.COLOR_BGR2RGB)
+        bgr = cv2.cvtColor(arr, cv2.COLOR_BGR2RGB)
         return bgr
 
     def numpy_to_qimage(arr):

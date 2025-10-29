@@ -214,7 +214,7 @@ class MainWindow(QMainWindow):
         crop.triggered.connect(self.imf.selective_crop)
 
         resize = QAction(QIcon("icons/icons8-resize.svg"), "Resize", self)
-        resize.triggered.connect(self.imf.resize)
+        resize.triggered.connect(lambda :[self.save_state(), self.imf.resize()])
 
         image_menu.addAction(crop)
         image_menu.addAction(resize)

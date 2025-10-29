@@ -1,9 +1,11 @@
-# Install pyqt6,pyqt6-tools
 import os
 
 # imports different classes from the PyQt library
+from PyQt6.QtCore import QSizeF, QSize
+from PyQt6 import QtGui
 from PyQt6.QtCore import QSize, Qt
-from PyQt6.QtGui import QAction, QIcon, QKeySequence, QPixmap, QImageReader, QImageIOHandler, QImageWriter
+from PyQt6.QtGui import QAction, QIcon, QKeySequence, QPixmap, QImageReader, QImage, QImageIOHandler, QImageWriter
+from PyQt6.QtGui import QPainter, QPixmap, QColor, QBrush, QPen, QImageReader
 from PyQt6.QtWidgets import (
     QApplication,
     QWidget,
@@ -16,6 +18,8 @@ from PyQt6.QtWidgets import (
     QToolBar, QStyle, QFileDialog, QMessageBox, QScrollArea, QVBoxLayout, QLayout
 )
 from img_canvas import Img_Canvas
+from image_menu_functions import imf
+from tools_menu_functions import tools
 
 import sys
 
@@ -32,6 +36,7 @@ def main():
     window.file_menu()
     window.edit_menu()
     window.image_menu()
+    window.tools_menu()
     app.exec()
 
 
@@ -45,17 +50,45 @@ class MainWindow(QMainWindow):
         self.canvas = Img_Canvas()                                  # Creates an instance of the canvas class
         self.scroll = QScrollArea()                                 # Creates a scroll area
 
+        self.imf = imf(self.canvas)
+        self.tools = tools(self.canvas)
+        self.undo_history = []                                      # List to store previous image states for undo function
+
 
         self.scroll.setWidget(self.canvas)                          # Puts the canvas inside the scroll area
         self.scroll.setWidgetResizable(False)
         self.scroll.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.setCentralWidget(self.scroll)                          # Makes tbe scroll are the main content
+
         self.status = QStatusBar()
         self.setStatusBar(self.status)
 
         self.current_path = None                                    # Tracks current file path
 
+    #### Undo Functions
+    def save_state(self):
+
+        pixmap = self.canvas.pixmap()
+        if pixmap and not pixmap.isNull():
+            self.undo_history.append(pixmap.copy())                 # Make a copy and add to history
+
+
+    # Undo the last action
+    def undo(self):
+        if len(self.undo_history) < 2:
+            self.status.showMessage("Nothing to undo")
+            return
+
+        self.undo_history.pop()                                     # Remove current state
+
+        previous = self.undo_history[-1]
+        self.canvas.set_image(previous.copy())
+        self.status.showMessage(f"Undo successfull. {len(self.undo_history) - 1} undos remaining")
+
+
+
     #### This method creates the dropdown menu for File #####
+    #### It does not contain the operations of the buttons #####
     def file_menu(self):
 
         menu = self.menuBar()
@@ -101,7 +134,19 @@ class MainWindow(QMainWindow):
 
         edit_menu = menu.addMenu("&Edit")
 
-## 2.Clipboard (menu with the following options:Copy, paste and Cut)
+        # Adds an undo button
+        undo_action = QAction(
+            self.style().standardIcon(QStyle.StandardPixmap.SP_ArrowBack),
+            "Undo",
+            self,
+        )
+        undo_action.setShortcut(QKeySequence.StandardKey.Undo)                  # Adds Ctrl+Z
+        undo_action.triggered.connect(self.undo)
+
+        edit_menu.addAction(undo_action)
+        edit_menu.addSeparator()
+
+        # 2.Clipboard (menu with the following options:Copy, paste and Cut)
         edit_menu.addSection("Clipboard")
 
 
@@ -148,44 +193,86 @@ class MainWindow(QMainWindow):
         edit_menu.addAction(copy_action)
         edit_menu.addAction(canvas_size)
 
+
     def image_menu(self):
+        # Makes Image menu
         menu = self.menuBar()
         image_menu = menu.addMenu("&Image")
 
+        # Makes select submenu
         select_menu = QMenu("&Select", self)
         image_menu.addMenu(select_menu)
-
         rectangular = QAction(QIcon("icons/icons8-rectangular.svg"), "Rectangular", self)
         lasso = QAction(QIcon("icons/icons8-lasso.svg"), "Lasso", self)
         polygon = QAction(QIcon("icons/icons8-polygon.svg"), "Polygon", self)
-
         select_menu.addAction(rectangular)
         select_menu.addAction(lasso)
         select_menu.addAction(polygon)
 
+        # Makes Cropping and resizing
         crop = QAction(QIcon("icons/icons8-crop.svg"), "Crop", self)
+        crop.triggered.connect(self.imf.selective_crop)
+
         resize = QAction(QIcon("icons/icons8-resize.svg"), "Resize", self)
+        resize.triggered.connect(lambda :[self.save_state(), self.imf.resize()])
+
         image_menu.addAction(crop)
         image_menu.addAction(resize)
 
+        # Makes Orientation submenu
         orientation_menu = QMenu("&Orientation", self)
         image_menu.addMenu(orientation_menu)
 
         rotate_right = QAction(QIcon("icons/icons8-rotate_right.svg"), "Rotate right", self)
+        rotate_right.triggered.connect(lambda: [self.save_state(), self.imf.rotate_CW()])
+
         rotate_left = QAction(QIcon("icons/icons8-rotate_left.svg"), "Rotate left", self)
+        rotate_left.triggered.connect(lambda :[self.save_state(), self.imf.rotate_CCW()])
+
         flip_horizontal = QAction(QIcon("icons/icons8-flip_horizontal.svg"), "Flip horizontal", self)
+        flip_horizontal.triggered.connect(lambda :[self.save_state(),self.imf.flip_horizontal()])
+
         flip_vertical = QAction(QIcon("icons/icons8-flip_vertical.svg"), "Flip vertical", self)
+        flip_vertical.triggered.connect(lambda :[self.save_state(),self.imf.flip_vertical()])
 
         orientation_menu.addAction(rotate_right)
         orientation_menu.addAction(rotate_left)
         orientation_menu.addAction(flip_horizontal)
         orientation_menu.addAction(flip_vertical)
 
+    def tools_menu(self):
+        menu = self.menuBar()
+        tools_menu = menu.addMenu("&Tools")
+
+        zoom_in = QAction(QIcon("icons/icons8-zoom.svg"), "Zoom In", self)
+        zoom_in.setShortcut("Ctrl++")
+        zoom_in.triggered.connect(self.canvas.zoom_in)
+
+        zoom_out = QAction(QIcon("icons/icons8-zoom.svg"), "Zoom out", self)
+        zoom_out.setShortcut("Ctrl+-")
+        zoom_out.triggered.connect(self.canvas.zoom_out)
+
+        reset_zoom = QAction("Reset Zoom")
+        reset_zoom.setShortcut("Ctrl+0")
+        reset_zoom.triggered.connect(self.canvas.reset_zoom)
+
+        draw = QAction(QIcon("icons/icons8-draw.svg"), "Draw", self)
+        draw.triggered.connect(self.tools.lasso_draw)
+
+        tools_menu.addAction(draw)
+        tools_menu.addAction(zoom_in)
+        tools_menu.addAction(zoom_out)
+        tools_menu.addAction(reset_zoom)
+
+    def update_zoom_status(self):
+        if self.canvas.image:
+            zoom_percent = self.canvas.get_zoom_percent()
+            self.status.showMessage(f"Zoom: {zoom_percent}%")
+
     def toolbar_button_clicked(self, s):
         print("click", s)
 
-
-    def current_image(self):
+    def current_qimage(self):
         if self.canvas.image is None:
             return None
         return self.canvas.image.toImage()
@@ -200,17 +287,14 @@ class MainWindow(QMainWindow):
             return False
 
         writer = QImageWriter(path, fmt  if fmt else b"")
-
-        ok = writer.write(img)                   # Write to disk
+        ok = writer.write(img)                  # Write to disk
         if not ok:
             QMessageBox.critical(self, "Save Failed", writer.errorString() or "Unkown error.")
             return False
 
         self.current_path = path
-        self.status.showMessage(f"Saved: {os.pathj.basename(path)}")
+        self.status.showMessage(f"Saved: {os.path.basename(path)}")
         return True
-
-
 
     def open_file(self):
 
@@ -254,6 +338,9 @@ class MainWindow(QMainWindow):
 
        self.current_path = path
 
+       # Saves initial state for undo
+       self.undo_history.clear()                        # Clear old history
+       self.save_state()                                # Saves state of newly opened image
 
 
     def save(self):

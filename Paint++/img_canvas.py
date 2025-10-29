@@ -1,12 +1,9 @@
-from itertools import chain
-
 # imports different classes from the PyQt library
 from PyQt6 import QtGui
-from PyQt6.QtGui import QPainter, QPixmap, QColor, QBrush, QPen, QImageReader
+from PyQt6.QtGui import QPainter, QPixmap, QColor, QBrush, QPen, QImage
 from PyQt6.QtCore import Qt, QPoint, QSize, QRect
 import cv2
 import numpy as np
-
 from PyQt6.QtWidgets import (
     QApplication,
     QWidget,
@@ -17,11 +14,11 @@ from PyQt6.QtWidgets import (
     QStatusBar,
     QToolBar, QStyle, QFileDialog, QMessageBox, QScrollArea, QInputDialog
 )
+
 from numpy.ma.core import reshape
 
 
 ##### Inhertis from Qwidget ######
-
 class Img_Canvas(QWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -38,6 +35,7 @@ class Img_Canvas(QWidget):
         self.resize_start_size = None
         self.resize_start_pos = None
 
+        self.zoom_scale = 1.0
 
 
     def make_checker_brush(self, tile=16):
@@ -60,8 +58,35 @@ class Img_Canvas(QWidget):
 
         self.image = pix                                        # Store the new image
         self.offset = QPoint(0, 0)                              # Reset to center
-        self.resize(self.image.size())                          # Resize Widget to prefferd size
+        self.zoom_scale = 1.0
+
+        if self.image is not None and not self.image.isNull():
+
+            self.setMinimumSize(self.image.size())
+
+            if self.image.width() > self.width() or self.image.height() > self.height():
+                self.resize(self.image.size())                      # Resize Widget to prefferd size
+
         self.update()                                           # Redraw to show new image
+
+    def pixmap(self):
+        """Return the currently displayed QPixmap."""
+        return self.image if self.image is not None and not self.image.isNull() else None
+
+    def zoom_in(self):
+        self.zoom_scale *= 1.25
+        self.update()
+
+    def zoom_out(self):
+        self.zoom_scale *= 0.8
+        self.update()
+
+    def reset_zoom(self):
+        self.zoom_scale = 1.0
+        self.update()
+
+    def get_zoom_percent(self):
+        return int(self.zoom_scale * 100)
 
 
     def paintEvent(self, event):
@@ -71,6 +96,9 @@ class Img_Canvas(QWidget):
         if self.image is None:                                  # Exits the method if there is no image
             return
 
+        scaled_width = int(self.image.width() * self.zoom_scale)
+        scaled_height = int(self.image.height() * self.zoom_scale)
+
         # Calculates where to draw the image so it is centered
         x = (self.width() - self.image.width()) / 2
         y = (self.height() - self.image.height()) / 2
@@ -78,7 +106,7 @@ class Img_Canvas(QWidget):
         # Where the image drawn after the users dragged it (self.offset)
         xi = int(x + self.offset.x())
         yi = int(y + self.offset.y())
-        p.drawPixmap(xi, yi, self.image)                        # Draws the image with DrawPixmap
+        p.drawPixmap(xi, yi, scaled_width, scaled_height, self.image)                        # Draws the image with DrawPixmap
 
         # Draw border around the image
         if self.selected:
@@ -86,8 +114,7 @@ class Img_Canvas(QWidget):
         else:
             p.setPen(QColor("#888888"))
 
-        p.drawRect(xi, yi, self.image.width()-1, self.image.height()-1)
-
+        p.drawRect(xi, yi, scaled_width-1, scaled_height-1)
 
     def sizeHint(self):
         if self.image is not None:
@@ -170,7 +197,7 @@ class Img_Canvas(QWidget):
         arr = np.array(ptr, reshape(height, width, 4))  #RGBA
 
         # Convert RGBA to BGR (OpenCV format)
-        bgr = cv.cvtColor(arr, cv.COLOR_BGR2RGB)
+        bgr = cv2.cvtColor(arr, cv2.COLOR_BGR2RGB)
         return bgr
 
     def numpy_to_qimage(arr):

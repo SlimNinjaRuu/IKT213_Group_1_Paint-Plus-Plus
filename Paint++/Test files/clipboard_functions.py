@@ -7,9 +7,9 @@ def copy_image(image):
     return image.copy()  # or: np.copy(image)
 
 def main():
-    img = cv2.imread('100.jpg', 1)
+    img = cv2.imread('../100.jpg', 1)
     if img is None:
-        raise FileNotFoundError("Could not load '100.jpg'")
+        raise FileNotFoundError("Could noTest filest load '100.jpg'")
 
     # Saves the selected area in the copied_image variable
     selected_area = rectangular_selection(img)

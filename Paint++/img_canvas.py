@@ -3,7 +3,12 @@ from PyQt6 import QtGui
 from PyQt6.QtGui import QPainter, QPixmap, QColor, QBrush, QPen, QImage
 from PyQt6.QtCore import Qt, QPoint, QSize, QRect
 import cv2
+from PyQt6 import QtCore
+from PyQt6.QtCore import QRectF
 import numpy as np
+from image_menu_functions import imf
+from selection_tools_functions import rectangular_selection
+
 from PyQt6.QtWidgets import (
     QApplication,
     QWidget,
@@ -25,7 +30,7 @@ class Img_Canvas(QWidget):
 
         self.image = None                                       # No image loaded yet - Hodls QPixmap (image data)
         self._checker = self.make_checker_brush(tile=16)        # Background Pattern
-        self.offset = QPoint(0, 0)                              # Sets the position of the image (for panning)
+        self.offset = QPoint(0, 0)                       # Sets the position of the image (for panning)
         self.panning = False                                    # Is the image being dragged, Boolean value
         self.Last_pos = None                                    # Last Mouse position
 
@@ -36,6 +41,15 @@ class Img_Canvas(QWidget):
         self.resize_start_pos = None
 
         self.zoom_scale = 1.0
+
+        self.setFocusPolicy(Qt.FocusPolicy.StrongFocus)
+
+        self.sel_mode = "pan"
+        self.rect_anchor = None                                 # Qpoint in image coordinates
+        self.rect_current = None                                # Qpoint to image coordinate
+        self.sel_active = False
+        self.sel_frozen = False                                 # Selection is finalized with Enter
+        self.sel_points = []
 
 
     def make_checker_brush(self, tile=16):
@@ -90,6 +104,7 @@ class Img_Canvas(QWidget):
 
 
     def paintEvent(self, event):
+
         p = QPainter(self)
         p.fillRect(self.rect(), self._checker)                  # Draw Checkerd Background
 
@@ -100,8 +115,8 @@ class Img_Canvas(QWidget):
         scaled_height = int(self.image.height() * self.zoom_scale)
 
         # Calculates where to draw the image so it is centered
-        x = (self.width() - self.image.width()) / 2
-        y = (self.height() - self.image.height()) / 2
+        x = (self.width() - scaled_width) / 2
+        y = (self.height() - scaled_height) / 2
 
         # Where the image drawn after the users dragged it (self.offset)
         xi = int(x + self.offset.x())
@@ -116,6 +131,50 @@ class Img_Canvas(QWidget):
 
         p.drawRect(xi, yi, scaled_width-1, scaled_height-1)
 
+        if self.sel_active:
+            selection_path = QtGui.QPainterPath()
+
+            # Rectangle selection
+            if self.sel_active and self.sel_mode == "rect" and self.rect_anchor and self.rect_current:
+                a = self.rect_anchor
+                b = self.rect_current
+
+                x1, y1 = min(a.x(), b.x()), min(a.y(), b.y())
+                x2, y2 = max(a.x(), b.x()), max(a.y(), b.y())
+
+                tl = self.image_to_widget(QPoint(x1, y1))
+                br = self.image_to_widget(QPoint(x2, y2))
+                selection_path.addRect(QRectF(QRect(tl, br)))
+
+            # Lasso/polygon selection
+            elif self.sel_mode in ("lasso", "poly") and len(self.sel_points) >= 2:
+
+                pts_w = [self.image_to_widget(p) for p in self.sel_points]
+
+                path = QtGui.QPainterPath()
+                path.moveTo(QtCore.QPointF(pts_w[0]))
+
+                for q in pts_w[1:]:
+                    path.lineTo(QtCore.QPointF(q))
+
+                if self.sel_mode == "poly" and self.sel_frozen and len(pts_w) >= 3:
+                    path.closeSubpath()
+
+                selection_path.addPath(path)
+
+
+            if not selection_path.isEmpty():
+                overlay = QtGui.QPainterPath()
+                overlay.addRect(QRectF(self.rect()))
+                dimmed_area = overlay.subtracted(selection_path)
+
+                p.fillPath(dimmed_area, QColor( 0, 0, 0, 80))
+                p.setPen(QPen(QColor(255, 0, 0), 2))
+                p.drawPath(selection_path)
+
+
+
+
     def sizeHint(self):
         if self.image is not None:
             return self.image.size()
@@ -124,24 +183,59 @@ class Img_Canvas(QWidget):
 
     ##### Mouse Press (Start Dragging) #####
     def mousePressEvent(self, event):
+
+        if event.button() == Qt.MouseButton.LeftButton and self.sel_active and self.sel_mode == "rect":
+            if not self.sel_frozen:
+                pos_w = event.position().toPoint()
+                pos_i = self.widget_to_image(pos_w)
+
+                if pos_i is not None:
+                    self.rect_anchor = pos_i
+                    self.rect_current = pos_i
+                    self.update()
+                return
+        if event.button() == Qt.MouseButton.LeftButton and self.sel_active and self.sel_mode == "lasso":
+            if not self.sel_frozen:
+                pos_i = self.widget_to_image(event.position().toPoint())
+                if pos_i is not None:
+                    if not self.sel_points:
+                        self.sel_points = [pos_i]
+                    else:
+                        self.sel_points.append(pos_i)
+                    self.update()
+                return
+
+        if event.button() == Qt.MouseButton.LeftButton and self.sel_active and self.sel_mode == "poly":
+            if not self.sel_frozen:
+                pos_i = self.widget_to_image(event.position().toPoint())
+                if pos_i is not None:
+                    self.sel_points.append(pos_i)
+                    self.update()
+                return
+
+
         if event.button() == Qt.MouseButton.LeftButton:
             if self.image is None:
                 return
 
             click_pos = event.position().toPoint()
+            image_rect = self.image_rect_on_widget()
 
-            # Calculate image rectangle
-            x = (self.width() - self.image.width()) / 2
-            y = (self.height() - self.image.height()) / 2
+            # Calculate image rectangle (at current zoom + offset)
+            sw = int(self.image.width() * self.zoom_scale)
+            sh = int(self.image.height() * self.zoom_scale)
+            x = (self.width() - sw) / 2
+            y = (self.height() - sh) / 2
+
             xi = int(x + self.offset.x())
             yi = int(y + self.offset.y())
-            image_rect = QRect(xi, yi, self.image.width(), self.image.height())
+            image_rect = QRect(xi, yi, sw, sh)
 
-            # Check if clickin inside image
+            # Check if clicking inside image
             if image_rect.contains(click_pos):
                 self.selected = True
                 self.panning = True
-                self.last_pos = click_pos
+                self.Last_pos = click_pos
                 self.setCursor(Qt.CursorShape.ClosedHandCursor)
                 self.update()
             else:
@@ -156,6 +250,25 @@ class Img_Canvas(QWidget):
 
     ##### Mouse movement while dragging #####
     def mouseMoveEvent(self, event):
+
+        if self.sel_active and self.sel_mode == "lasso" and not self.sel_frozen and self.sel_points:
+            pos_i = self.widget_to_image(event.position().toPoint())
+            if pos_i is not None:
+                if self.sel_points[-1] != pos_i:
+                    self.sel_points.append(pos_i)
+                    self.update()
+            return
+
+
+        if self.sel_active and self.sel_mode == "rect" and not self.sel_frozen and  self.rect_anchor is not None:
+            pos_w = event.position().toPoint()
+            pos_i = self.widget_to_image(pos_w)
+            if pos_i is not None:
+                self.rect_current = pos_i
+                self.update()
+            return
+
+
         if self.panning and self.Last_pos is not None:
 
             pos = event.position().toPoint()                    # Current mouse position
@@ -167,6 +280,27 @@ class Img_Canvas(QWidget):
 
     ##### Mouse Release (stop dragging) #####
     def mouseReleaseEvent(self, event):
+
+        if self.sel_active and self.sel_mode == "lasso" and self.sel_points and not self.sel_frozen:
+            self.update()
+            return
+
+
+        if self.sel_active and self.sel_mode == "rect" and self.rect_anchor is not None:
+
+            if not self.sel_frozen:
+                pos_w = event.position().toPoint()
+                pos_i = self.widget_to_image(pos_w)
+                if pos_i is not None:
+                    self.rect_current = pos_i
+                    self.update()
+                return
+
+
+
+        if self.sel_active and self.sel_mode == "rect":
+            return
+
         if event.button() == Qt.MouseButton.LeftButton:
             self.panning = False                                # Stop Panning mode
             self.Last_pos = None
@@ -210,6 +344,189 @@ class Img_Canvas(QWidget):
 
         q_img = QImage(rgb.data, width, height, bytes_per_line, QImage.Format.Format_RGB888)
         return q_img.copy()
+
+    def _confirm_rect_selection(self):
+
+
+        if not (self.image and self.rect_anchor and self.rect_current):
+            self.cancel_selection()
+            return
+
+        bgr = imf.qpixmap_to_cv2(self.image)
+        if bgr is None:
+            self.cancel_selection()
+            return
+
+        p1 = (int(self.rect_anchor.x()), int(self.rect_anchor.y()))
+        p2 = (int(self.rect_current.x()), int(self.rect_current.y()))
+
+        h, w = bgr.shape[:2]
+
+
+        cropped_bgr = rectangular_selection(bgr, p1, p2)
+
+        self.set_image(imf.cv2_to_qpixmap(cropped_bgr))
+        self.cancel_selection()
+
+
+    def _confirm_polygon_selection(self):
+        if not (self.image and self.sel_points and len(self.sel_points) >= 3):
+            self.cancel_selection()
+            return
+
+        from selection_tools_functions import polygon_selection
+        bgr = imf.qpixmap_to_cv2(self.image)
+        if bgr is None:
+            self.cancel_selection()
+            return
+
+        pts = [(p.x(), p.y()) for p in self.sel_points]
+
+        result_bgr = polygon_selection(bgr, pts, mode="masked_bgr")
+
+        self.set_image(imf.cv2_to_qpixmap(result_bgr))
+        self.cancel_selection()
+
+    def _confirm_lasso_selection(self):
+        if not (self.image and self.sel_points and len(self.sel_points) >= 2):
+            self.cancel_selection()
+            return
+
+        from selection_tools_functions import lasso_selection
+
+        bgr = imf.qpixmap_to_cv2(self.image)
+        if bgr is None:
+            self.cancel_selection()
+            return
+
+        pts = [(p.x(), p.y()) for p in self.sel_points]
+
+        result_bgr = lasso_selection(bgr, pts)
+        self.set_image(imf.cv2_to_qpixmap(result_bgr))
+        self.cancel_selection()
+
+
+
+    def start_selection(self, mode: str):
+
+        if not self.image or self.image.isNull():
+            return
+
+        if mode not in ("rect", "lasso", "poly"):
+            return
+
+        self.sel_mode = mode
+        self.sel_active = True
+        self.sel_frozen = False
+        self.rect_anchor = None
+        self.rect_current = None
+        self.sel_points = []
+        self.setCursor(Qt.CursorShape.CrossCursor)
+        self.setFocus()
+        self.update()
+
+    def cancel_selection(self):
+        self.sel_mode = "pan"
+        self.sel_active = False
+        self.sel_frozen = False
+        self.rect_anchor = None
+        self.rect_current = None
+        self.setCursor(Qt.CursorShape.ArrowCursor)
+        self.update()
+
+
+    def image_rect_on_widget(self) -> QRect:
+
+        if not self.image or self.image.isNull():
+            return QRect()
+
+        sw = int(self.image.width() * self.zoom_scale)
+        sh = int(self.image.height() * self.zoom_scale)
+
+        x = int((self.width() - sw) / 2 + self.offset.x())
+        y = int((self.height() - sh) / 2 + self.offset.y())
+
+        return QRect(x, y, sw, sh)
+
+    def widget_to_image(self, p: QPoint):
+
+        if not self.image or self.image.isNull():
+            return None
+
+        r = self.image_rect_on_widget()
+        if not r.contains(p):
+            return None
+
+        ix = (p.x() - r.x()) / self.zoom_scale
+        iy = (p.y() - r.y()) / self.zoom_scale
+
+        ix = max(0, min(int(ix), min(self.image.width() - 1, int(ix))))
+        iy = max(0, min(int(iy), min(self.image.height() - 1, int(iy))))
+
+        return QPoint(ix, iy)
+
+
+    def image_to_widget(self, p: QPoint) -> QPoint:
+        r = self.image_rect_on_widget()
+        wx = int(r.x() + p.x() * self.zoom_scale)
+        wy = int(r.y() + p.y() * self.zoom_scale)
+        return QPoint(wx, wy)
+
+    def keyPressEvent(self, event):
+
+        if self.sel_active and self.sel_mode in ("rect","lasso", "poly"):
+            if event.key() in (Qt.Key.Key_Return, Qt.Key.Key_Enter):
+                can_freeze = (
+                (self.sel_mode == "rect" and self.rect_anchor and self.rect_current) or
+                (self.sel_mode in "lasso" and len(self.sel_points) >= 2) or
+                (self.sel_mode == "poly" and len (self.sel_points) >= 3)
+                )
+
+                if can_freeze and not self.sel_frozen:
+                    self.sel_frozen = True
+                    self.setCursor(Qt.CursorShape.ArrowCursor)
+                    self.update()
+                elif self.sel_frozen:
+                    if self.sel_mode == "rect":
+                        self._confirm_rect_selection()
+                    elif self.sel_mode == "lasso":
+                        self._confirm_lasso_selection()
+                    elif self.sel_mode == "poly":
+                        self._confirm_polygon_selection()
+                return
+
+            if event.key() == Qt.Key.Key_Escape:
+                self.cancel_selection()
+                return
+        super().keyPressEvent(event)
+
+
+    def selection_bounds_image(self):
+        if not (self.sel_active and self.rect_anchor and self.rect_current):
+            return None
+
+        x1, y1 = self.rect_anchor.x(), self.rect_anchor.y()
+        x2, y2 = self.rect_current.x(), self.rect_current.y()
+
+        x1, x2 = sorted((int(x1), int(x2)))
+        y1, y2 = sorted((int(y1), int(y2)))
+
+        if x2 <= x1 or y2 <= y1:
+            return None
+        return (x1, y1, x2, y2)
+
+    def get_cv2_image(self):
+        if not self.image or self.image.isNull():
+            return None
+        return imf.qpixmap_to_cv2(self.image)
+
+
+    def set_cv2_image(self, bgr):
+        self.set_image(imf.cv2_to_qpixmap(bgr))
+
+
+
+
 
 
 

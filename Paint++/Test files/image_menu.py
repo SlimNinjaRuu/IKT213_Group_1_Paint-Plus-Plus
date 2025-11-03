@@ -34,9 +34,9 @@ def flip(image, orientation):
     return None
 
 def main():
-    img = cv2.imread('100.jpg', 1)
-    img_const = cv2.imread('100.jpg', 1)
-    img_const2 = cv2.imread('100.jpg', 1)
+    img = cv2.imread('../100.jpg', 1)
+    img_const = cv2.imread('../100.jpg', 1)
+    img_const2 = cv2.imread('../100.jpg', 1)
 
     # Cropping parameters
     # Add some visual adjustment method - width/height = adjustable variable in GUI

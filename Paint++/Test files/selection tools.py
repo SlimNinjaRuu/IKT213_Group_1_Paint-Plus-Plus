@@ -150,7 +150,7 @@ def rectangular_selection(image):
 
 # Demo
 def main():
-    img = cv2.imread('100.jpg', 1)
+    img = cv2.imread('../100.jpg', 1)
 
     # Polygon selection demo (click-to-add)
     poly_out = polygon_selection(img)

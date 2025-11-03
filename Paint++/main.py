@@ -3,7 +3,7 @@ import os
 # imports different classes from the PyQt library
 from PyQt6.QtCore import QSizeF, QSize
 from PyQt6 import QtGui
-from PyQt6.QtCore import QSize, Qt
+from PyQt6.QtCore import *
 from PyQt6.QtGui import QAction, QIcon, QKeySequence, QPixmap, QImageReader, QImage, QImageIOHandler, QImageWriter
 from PyQt6.QtGui import QPainter, QPixmap, QColor, QBrush, QPen, QImageReader
 from PyQt6.QtWidgets import (
@@ -203,8 +203,15 @@ class MainWindow(QMainWindow):
         select_menu = QMenu("&Select", self)
         image_menu.addMenu(select_menu)
         rectangular = QAction(QIcon("icons/icons8-rectangular.svg"), "Rectangular", self)
+        rectangular.triggered.connect(lambda : [self.save_state(), self.canvas.start_selection("rect"), self.canvas.setFocus()])
+
         lasso = QAction(QIcon("icons/icons8-lasso.svg"), "Lasso", self)
+        lasso.triggered.connect(lambda : self.canvas.start_selection("lasso"))
+
         polygon = QAction(QIcon("icons/icons8-polygon.svg"), "Polygon", self)
+        polygon.triggered.connect(lambda : self.canvas.start_selection("poly"))
+
+
         select_menu.addAction(rectangular)
         select_menu.addAction(lasso)
         select_menu.addAction(polygon)

@@ -1,7 +1,7 @@
 # imports different classes from the PyQt library
 from PyQt6 import QtGui
-from PyQt6.QtGui import QPainter, QPixmap, QColor, QBrush, QPen, QImage
-from PyQt6.QtCore import Qt, QPoint, QSize, QRect
+from PyQt6.QtGui import QPainter, QPixmap, QColor, QBrush, QPen, QImage, QGuiApplication
+from PyQt6.QtCore import Qt, QPoint, QSize, QRect, pyqtSignal
 import cv2
 import numpy as np
 from PyQt6.QtWidgets import (
@@ -20,14 +20,21 @@ from numpy.ma.core import reshape
 
 ##### Inhertis from Qwidget ######
 class Img_Canvas(QWidget):
+    historyChanged = pyqtSignal(bool, bool) # undo, redo - for enabling/disabling action
+
     def __init__(self, parent=None):
         super().__init__(parent)
 
-        self.image = None                                       # No image loaded yet - Hodls QPixmap (image data)
+
+        self.image: QPixmap | None = None                                       # No image loaded yet - Hodls QPixmap (image data)
         self._checker = self.make_checker_brush(tile=16)        # Background Pattern
         self.offset = QPoint(0, 0)                              # Sets the position of the image (for panning)
         self.panning = False                                    # Is the image being dragged, Boolean value
-        self.Last_pos = None                                    # Last Mouse position
+        self.last_pos = None                                    # Last Mouse position
+
+        self._undo_stack: list[QPixmap] = []                    # Undo function
+        self._redo_stack: list[QPixmap] = []
+        self._max_undos = 20                                    # Can undo back 20 times
 
         self.selected = False
         self.handle_size = 8
@@ -88,33 +95,31 @@ class Img_Canvas(QWidget):
     def get_zoom_percent(self):
         return int(self.zoom_scale * 100)
 
-
     def paintEvent(self, event):
         p = QPainter(self)
-        p.fillRect(self.rect(), self._checker)                  # Draw Checkerd Background
+        p.fillRect(self.rect(), self._checker)
 
-        if self.image is None:                                  # Exits the method if there is no image
+        if self.image is None or self.image.isNull():
             return
 
+        # Scale dimensions
         scaled_width = int(self.image.width() * self.zoom_scale)
         scaled_height = int(self.image.height() * self.zoom_scale)
 
-        # Calculates where to draw the image so it is centered
-        x = (self.width() - self.image.width()) / 2
-        y = (self.height() - self.image.height()) / 2
+        # Center using scaled size
+        x = (self.width() - scaled_width) / 2
+        y = (self.height() - scaled_height) / 2
 
-        # Where the image drawn after the users dragged it (self.offset)
         xi = int(x + self.offset.x())
         yi = int(y + self.offset.y())
-        p.drawPixmap(xi, yi, scaled_width, scaled_height, self.image)                        # Draws the image with DrawPixmap
 
-        # Draw border around the image
-        if self.selected:
-            p.setPen(QPen(QColor("#000000"), 3))
-        else:
-            p.setPen(QColor("#888888"))
+        # Draw image scaled
+        p.drawPixmap(xi, yi, scaled_width, scaled_height, self.image)
 
-        p.drawRect(xi, yi, scaled_width-1, scaled_height-1)
+        # Border
+        p.setPen(QPen(QColor("#000000") if self.selected else QColor("#888888"),
+                      3 if self.selected else 1))
+        p.drawRect(xi, yi, scaled_width - 1, scaled_height - 1)
 
     def sizeHint(self):
         if self.image is not None:
@@ -125,19 +130,20 @@ class Img_Canvas(QWidget):
     ##### Mouse Press (Start Dragging) #####
     def mousePressEvent(self, event):
         if event.button() == Qt.MouseButton.LeftButton:
-            if self.image is None:
+            if self.image is None or self.image.isNull():
                 return
 
             click_pos = event.position().toPoint()
 
-            # Calculate image rectangle
-            x = (self.width() - self.image.width()) / 2
-            y = (self.height() - self.image.height()) / 2
+            # On-screen rect of scaled image
+            scaled_w = int(self.image.width() * self.zoom_scale)
+            scaled_h = int(self.image.height() * self.zoom_scale)
+            x = (self.width() - scaled_w) / 2
+            y = (self.height() - scaled_h) / 2
             xi = int(x + self.offset.x())
             yi = int(y + self.offset.y())
-            image_rect = QRect(xi, yi, self.image.width(), self.image.height())
+            image_rect = QRect(xi, yi, scaled_w, scaled_h)
 
-            # Check if clickin inside image
             if image_rect.contains(click_pos):
                 self.selected = True
                 self.panning = True
@@ -148,20 +154,17 @@ class Img_Canvas(QWidget):
                 self.selected = False
                 self.update()
 
-
-            self.panning = True                                 # Start Panning mode
-            self.Last_pos = event.position().toPoint()          # Remember where we clicked
-            self.setCursor(Qt.CursorShape.ClosedHandCursor)     # Change cursor to hand
+    # Change cursor to hand
 
 
     ##### Mouse movement while dragging #####
     def mouseMoveEvent(self, event):
-        if self.panning and self.Last_pos is not None:
+        if self.panning and self.last_pos is not None:
 
             pos = event.position().toPoint()                    # Current mouse position
-            delta = pos - self.Last_pos                         # The Change in mouse position
+            delta = pos - self.last_pos                         # The Change in mouse position
             self.offset += delta                                # Move the image by that amount
-            self.Last_pos = pos                                 # Update for next frame
+            self.last_pos = pos                                 # Update for next frame
             self.update()                                       # Trigger paintEvent to redraw, handled by Qt's Event loop
 
 
@@ -169,7 +172,7 @@ class Img_Canvas(QWidget):
     def mouseReleaseEvent(self, event):
         if event.button() == Qt.MouseButton.LeftButton:
             self.panning = False                                # Stop Panning mode
-            self.Last_pos = None
+            self.last_pos = None
             self.setCursor(Qt.CursorShape.ArrowCursor)          # Change back to normal cursor
 
 
@@ -184,34 +187,143 @@ class Img_Canvas(QWidget):
         if not ok2:     # User Clicked Cancel
             return
 
-        self.resize(width, height)
+        # undo snapshot before change
+        self.mark_state()
+
+        # create a new transparent pixmap and blit old content
+        new_pm = QPixmap(width, height)
+        new_pm.fill(Qt.transparent)
+
+        if self.image and not self.image.isNull():
+            p = QPainter(new_pm)
+            # draw existing image at 0,0 (or compute centered coords if you prefer)
+            p.drawPixmap(0, 0, self.image)
+            p.end()
+
+        self.image = new_pm
+        self.setMinimumSize(self.image.size())
+        self.resize(self.image.size())
         self.update()
 
     ##### Convert QImage to Numpy array for OpenCV
-    def qimage_to_numpy(self, qimage):
+    def qimage_to_numpy(qimage: QImage):
+        """Convert QImage (any) to numpy BGR (OpenCV)."""
+        qimage = qimage.convertToFormat(QImage.Format.Format_RGBA8888)
         width = qimage.width()
         height = qimage.height()
         ptr = qimage.bits()
-        bits = ptr.tobytes()
         ptr.setsize(qimage.sizeInBytes())
-        arr = np.array(ptr, reshape(height, width, 4))  #RGBA
-
-        # Convert RGBA to BGR (OpenCV format)
-        bgr = cv2.cvtColor(arr, cv2.COLOR_BGR2RGB)
+        arr = np.frombuffer(ptr, np.uint8).reshape((height, width, 4))
+        # RGBA -> BGR
+        bgr = cv2.cvtColor(arr, cv2.COLOR_RGBA2BGR)
         return bgr
 
-    def numpy_to_qimage(arr):
-
-        # Convert BGR to RGB
+    def numpy_to_qimage(arr: np.ndarray) -> QImage:
+        """Convert numpy BGR (OpenCV) to QImage RGB888."""
         rgb = cv2.cvtColor(arr, cv2.COLOR_BGR2RGB)
-
-        height, width, channels = rgb.shape
-        bytes_per_line = 3 * width
-
-        q_img = QImage(rgb.data, width, height, bytes_per_line, QImage.Format.Format_RGB888)
+        h, w, ch = rgb.shape
+        bytes_per_line = ch * w
+        q_img = QImage(rgb.data, w, h, bytes_per_line, QImage.Format.Format_RGB888)
         return q_img.copy()
 
+    def _push_undo(self):
+        """Save a snapshot of the current image into the undo stack."""
+        if isinstance(self.image, QPixmap) and not self.image.isNull():
+            if len(self._undo_stack) >= self._max_undos:
+                self._undo_stack.pop(0)
+            self._undo_stack.append(self.image.copy())
 
+        # modify the image (open, draw, paste, cut)
+
+    def mark_state(self):
+        """Call this RIGHT BEFORE any change to self.image pixels."""
+        self._push_undo()
+        self._redo_stack.clear()
+        self.historyChanged.emit(bool(self._undo_stack), bool(self._redo_stack))
+
+    def reset_history(self):
+        self._undo_stack.clear()
+        self._redo_stack.clear()
+        self.historyChanged.emit(False, False)
+
+
+    def undo(self):
+        if not self._undo_stack:
+            return
+        current = self.image.copy() if self.image and not self.image.isNull() else None
+        self.image = self._undo_stack.pop()
+        if current is not None:
+            self._redo_stack.append(current)
+        self.update()
+        self.historyChanged.emit(bool(self._undo_stack), bool(self._redo_stack))
+
+    def redo(self):
+        if not self._redo_stack:
+            return
+        current = self.image.copy() if self.image and not self.image.isNull() else None
+        self.image = self._redo_stack.pop()
+        if current is not None:
+            self._undo_stack.append(current)
+        self.update()
+        self.historyChanged.emit(bool(self._undo_stack), bool(self._redo_stack))
+
+    # Clipboard dunction
+    def copy_to_clipboard(self):
+        if self.image and not self.image.isNull():
+            QGuiApplication.clipboard().setImage(self.image.toImage().copy())
+
+    def paste_from_clipboard(self):
+        cb = QGuiApplication.clipboard()
+        md = cb.mimeData()
+
+        # Prefer image (most robust on Windows), fallback to pixmap
+        pix = None
+        if md and md.hasImage():
+            img = cb.image()  # QImage
+            if not img.isNull():
+                pix = QPixmap.fromImage(img)
+        if pix is None or pix.isNull():
+            p2 = cb.pixmap()
+            if not p2.isNull():
+                pix = p2
+
+        if pix is None or pix.isNull():
+            return
+
+        self.mark_state()
+
+        if self.image is None or self.image.isNull():
+            self.image = pix.copy()
+        else:
+            p = QPainter(self.image)
+            p.drawPixmap(0, 0, pix)
+            p.end()
+
+        self.update()
+
+
+
+
+    def cut_to_clipboard(self):
+        # nothing to cut
+        if not self.image or self.image.isNull():
+            return
+
+        # snapshot for undo (do this BEFORE any change)
+        self.mark_state()
+
+        # 1) Put a *copy* of the image (QImage) on the clipboard to avoid shared buffers
+        img_copy = self.image.toImage().copy()
+        QGuiApplication.clipboard().setImage(img_copy)
+
+        # 2) Replace the canvas pixmap with a fresh transparent one (same size)
+        size = self.image.size()
+        new_pm = QPixmap(size.width(), size.height())
+        new_pm.fill(Qt.transparent)
+        self.image = new_pm
+
+        # 3) repaint
+        self.update()
 
 
 

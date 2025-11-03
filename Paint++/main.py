@@ -3,8 +3,8 @@ import os
 # imports different classes from the PyQt library
 from PyQt6.QtCore import QSizeF, QSize
 from PyQt6 import QtGui
-from PyQt6.QtCore import QSize, Qt
-from PyQt6.QtGui import QAction, QIcon, QKeySequence, QPixmap, QImageReader, QImage, QImageIOHandler, QImageWriter
+from PyQt6.QtCore import QSize, Qt, pyqtSlot
+from PyQt6.QtGui import QAction, QIcon, QKeySequence, QPixmap, QImageReader, QImage, QImageIOHandler, QImageWriter, QGuiApplication
 from PyQt6.QtGui import QPainter, QPixmap, QColor, QBrush, QPen, QImageReader
 from PyQt6.QtWidgets import (
     QApplication,
@@ -141,12 +141,17 @@ class MainWindow(QMainWindow):
             self,
         )
         undo_action.setShortcut(QKeySequence.StandardKey.Undo)                  # Adds Ctrl+Z
-        undo_action.triggered.connect(self.undo)
-
+        undo_action.triggered.connect(self.canvas.undo)                         # Call canvas undo
         edit_menu.addAction(undo_action)
         edit_menu.addSeparator()
 
-        # 2.Clipboard (menu with the following options:Copy, paste and Cut)
+        redo_action = QAction(self.style().standardIcon(QStyle.StandardPixmap.SP_ArrowForward), "Redo", self)
+        redo_action.setShortcuts([QKeySequence.StandardKey.Redo, QKeySequence("Ctrl+Y")])
+        redo_action.triggered.connect(self.canvas.redo)
+
+        edit_menu.addAction(redo_action)
+
+        # 2.Clipboard
         edit_menu.addSection("Clipboard")
 
 
@@ -159,8 +164,8 @@ class MainWindow(QMainWindow):
             "Copy",
             self,
         )
-        copy_action.setShortcut(QKeySequence.StandardKey.Copy) # copy function
-        copy_action.triggered.connect(self.toolbar_button_clicked)
+        copy_action.setShortcut(QKeySequence.StandardKey.Copy)                  # copy function
+        copy_action.triggered.connect(self.canvas.copy_to_clipboard)            # call canvas copy
 
         paste_action = QAction(
             QIcon.fromTheme(
@@ -170,8 +175,8 @@ class MainWindow(QMainWindow):
             "Paste",
             self,
         )
-        paste_action.setShortcut(QKeySequence.StandardKey.Paste) #paste function
-        paste_action.triggered.connect(self.toolbar_button_clicked)
+        paste_action.setShortcut(QKeySequence.StandardKey.Paste)                #paste function
+        paste_action.triggered.connect(self.canvas.paste_from_clipboard)        # call canvas paste
 
         cut_action = QAction(
             QIcon.fromTheme(
@@ -181,12 +186,16 @@ class MainWindow(QMainWindow):
             "Cut",
             self,
         )
-        cut_action.setShortcut(QKeySequence.StandardKey.Cut) #cut function
-        cut_action.triggered.connect(self.toolbar_button_clicked)
+        cut_action.setShortcut(QKeySequence.StandardKey.Cut)                    #cut function
+        cut_action.triggered.connect(self.canvas.cut_to_clipboard)              # call canvas cut
 
         # Allows user to change the canvas size, uses the resize_canvas method from img_canvas
         canvas_size = QAction(self.style().standardIcon(QStyle.StandardPixmap.SP_FileDialogDetailedView), "Canvas Size", self)
-        canvas_size.triggered.connect(self.canvas.resize_canvas)
+
+        def _resize_with_undo():
+            self.canvas.mark_state()
+            self.canvas.resize_canvas()
+        canvas_size.triggered.connect(_resize_with_undo)
 
         edit_menu.addAction(paste_action)
         edit_menu.addAction(cut_action)
@@ -214,7 +223,7 @@ class MainWindow(QMainWindow):
         crop.triggered.connect(self.imf.selective_crop)
 
         resize = QAction(QIcon("icons/icons8-resize.svg"), "Resize", self)
-        resize.triggered.connect(lambda :[self.save_state(), self.imf.resize()])
+        resize.triggered.connect(lambda :[self.canvas.mark_state(), self.imf.resize()])
 
         image_menu.addAction(crop)
         image_menu.addAction(resize)
@@ -224,16 +233,16 @@ class MainWindow(QMainWindow):
         image_menu.addMenu(orientation_menu)
 
         rotate_right = QAction(QIcon("icons/icons8-rotate_right.svg"), "Rotate right", self)
-        rotate_right.triggered.connect(lambda: [self.save_state(), self.imf.rotate_CW()])
+        rotate_right.triggered.connect(lambda: [self.canvas.mark_state(), self.imf.rotate_CW()])
 
         rotate_left = QAction(QIcon("icons/icons8-rotate_left.svg"), "Rotate left", self)
-        rotate_left.triggered.connect(lambda :[self.save_state(), self.imf.rotate_CCW()])
+        rotate_left.triggered.connect(lambda :[self.canvas.mark_state(), self.imf.rotate_CCW()])
 
         flip_horizontal = QAction(QIcon("icons/icons8-flip_horizontal.svg"), "Flip horizontal", self)
-        flip_horizontal.triggered.connect(lambda :[self.save_state(),self.imf.flip_horizontal()])
+        flip_horizontal.triggered.connect(lambda :[self.canvas.mark_state(),self.imf.flip_horizontal()])
 
         flip_vertical = QAction(QIcon("icons/icons8-flip_vertical.svg"), "Flip vertical", self)
-        flip_vertical.triggered.connect(lambda :[self.save_state(),self.imf.flip_vertical()])
+        flip_vertical.triggered.connect(lambda: [self.canvas.mark_state(), self.imf.flip_vertical()])
 
         orientation_menu.addAction(rotate_right)
         orientation_menu.addAction(rotate_left)
@@ -333,14 +342,16 @@ class MainWindow(QMainWindow):
 
         # Send Image to Canvas
        self.canvas.set_image(pix)                       # Calls the set_image method from img_canvas
+
        self.scroll.horizontalScrollBar().setValue(0)
        self.scroll.verticalScrollBar().setValue(0)
 
        self.current_path = path
+       self.canvas.reset_history()                      # start fresh history for the newly opened image
 
        # Saves initial state for undo
-       self.undo_history.clear()                        # Clear old history
-       self.save_state()                                # Saves state of newly opened image
+       self.undo_history.clear()  # Clear old history
+       #self.save_state()                                # Saves state of newly opened image
 
 
     def save(self):

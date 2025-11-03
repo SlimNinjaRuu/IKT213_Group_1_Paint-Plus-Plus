@@ -5,17 +5,12 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="3d484651-8040-42ef-b6b3-7b2286c5c8bf" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/Paint++/.idea/img_canvas.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Paint++/clipboard_functions.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Paint++/icons/icons8-draw.svg" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Paint++/icons/icons8-zoom.svg" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Paint++/img_canvas.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Paint++/test.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Paint++/tools_menu_functions.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/IKT213_Group_1_Paint-Plus-Plus.iml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/IKT213_Group_1_Paint-Plus-Plus.iml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Paint++/image_menu.py" beforeDir="false" afterPath="$PROJECT_DIR$/Paint++/image_menu_functions.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Paint++/100.jpg" beforeDir="false" afterPath="$PROJECT_DIR$/Paint++/100.jpg" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Paint++/img_canvas.py" beforeDir="false" afterPath="$PROJECT_DIR$/Paint++/img_canvas.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Paint++/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/Paint++/main.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Paint++/selection tools.py" beforeDir="false" afterPath="$PROJECT_DIR$/Paint++/selection_tools_functions.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -30,6 +25,11 @@
     </option>
   </component>
   <component name="Git.Settings">
+    <option name="RECENT_BRANCH_BY_REPOSITORY">
+      <map>
+        <entry key="$PROJECT_DIR$" value="main" />
+      </map>
+    </option>
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
   </component>
   <component name="ProjectColorInfo">{
@@ -43,6 +43,7 @@
   </component>
   <component name="PropertiesComponent"><![CDATA[{
   "keyToString": {
+    "ModuleVcsDetector.initialDetectionPerformed": "true",
     "Python.clipboard_functions.executor": "Run",
     "Python.image_menu.executor": "Run",
     "Python.img_canvas.executor": "Run",
@@ -54,9 +55,20 @@
     "RunOnceActivity.ShowReadmeOnStart": "true",
     "RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252": "true",
     "RunOnceActivity.git.unshallow": "true",
-    "git-widget-placeholder": "new-petter-branch-2",
-    "last_opened_file_path": "C:/Users/pette/IKT213_Group_1_Paint-Plus-Plus/Paint++",
-    "settings.editor.selected.configurable": "com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable"
+    "com.intellij.ml.llm.matterhorn.ej.ui.settings.DefaultAutoModeForALLUsers.v1": "true",
+    "com.intellij.ml.llm.matterhorn.ej.ui.settings.DefaultModelSelectionForGA.v1": "true",
+    "git-widget-placeholder": "Edit-clipboard",
+    "ignore.virus.scanning.warn.message": "true",
+    "junie.onboarding.icon.badge.shown": "true",
+    "last_opened_file_path": "C:/Users/micha/Documents/UiA/IKT213_Group_1_Paint-Plus-Plus",
+    "node.js.detected.package.eslint": "true",
+    "node.js.detected.package.tslint": "true",
+    "node.js.selected.package.eslint": "(autodetect)",
+    "node.js.selected.package.tslint": "(autodetect)",
+    "nodejs_package_manager_path": "npm",
+    "settings.editor.selected.configurable": "configurable.group.appearance",
+    "to.speed.mode.migration.done": "true",
+    "vue.rearranger.settings.migration": "true"
   }
 }]]></component>
   <component name="RecentsManager">
@@ -72,9 +84,13 @@
   <component name="SharedIndexes">
     <attachedChunks>
       <set>
-        <option value="bundled-python-sdk-7e47963ff851-f0eec537fc84-com.jetbrains.pycharm.pro.sharedIndexes.bundled-PY-252.23892.515" />
+        <option value="bundled-js-predefined-d6986cc7102b-3aa1da707db6-JavaScript-PY-252.26830.99" />
+        <option value="bundled-python-sdk-164cda30dcd9-0af03a5fa574-com.jetbrains.pycharm.pro.sharedIndexes.bundled-PY-252.26830.99" />
       </set>
     </attachedChunks>
+  </component>
+  <component name="SvnConfiguration">
+    <configuration>C:\Users\micha\AppData\Roaming\Subversion</configuration>
   </component>
   <component name="TaskManager">
     <task active="true" id="Default" summary="Default task">
@@ -83,8 +99,15 @@
       <option name="number" value="Default" />
       <option name="presentableId" value="Default" />
       <updated>1760347501360</updated>
+      <workItem from="1761778287857" duration="1403000" />
+      <workItem from="1761783097845" duration="2836000" />
+      <workItem from="1761842553696" duration="429000" />
+      <workItem from="1762104805067" duration="15456000" />
     </task>
     <servers />
+  </component>
+  <component name="TypeScriptGeneratedFilesManager">
+    <option name="version" value="3" />
   </component>
   <component name="Vcs.Log.Tabs.Properties">
     <option name="TAB_STATES">
@@ -96,5 +119,9 @@
         </entry>
       </map>
     </option>
+  </component>
+  <component name="com.intellij.coverage.CoverageDataManagerImpl">
+    <SUITE FILE_PATH="coverage/IKT213_Group_1_Paint_Plus_Plus$img_canvas.coverage" NAME="img_canvas Coverage Results" MODIFIED="1762124467251" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/Paint++" />
+    <SUITE FILE_PATH="coverage/IKT213_Group_1_Paint_Plus_Plus$main.coverage" NAME="main Coverage Results" MODIFIED="1762134752309" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/Paint++" />
   </component>
 </project>

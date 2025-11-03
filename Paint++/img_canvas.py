@@ -1,7 +1,7 @@
 # imports different classes from the PyQt library
 from PyQt6 import QtGui
 from PyQt6.QtGui import QPainter, QPixmap, QColor, QBrush, QPen, QImage, QGuiApplication
-from PyQt6.QtCore import Qt, QPoint, QSize, QRect, pyqtSignal
+from PyQt6.QtCore import Qt, QPoint, QSize, QRect, pyqtSignal, pyqtSlot, QBuffer, QByteArray, QIODevice, QMimeData
 import cv2
 import numpy as np
 from PyQt6.QtWidgets import (
@@ -17,10 +17,14 @@ from PyQt6.QtWidgets import (
 
 from numpy.ma.core import reshape
 
+TRANSPARENT = QColor(0, 0, 0, 0)
+
 
 ##### Inhertis from Qwidget ######
 class Img_Canvas(QWidget):
     historyChanged = pyqtSignal(bool, bool) # undo, redo - for enabling/disabling action
+
+
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -192,7 +196,7 @@ class Img_Canvas(QWidget):
 
         # create a new transparent pixmap and blit old content
         new_pm = QPixmap(width, height)
-        new_pm.fill(Qt.transparent)
+        new_pm.fill(TRANSPARENT)
 
         if self.image and not self.image.isNull():
             p = QPainter(new_pm)
@@ -301,30 +305,30 @@ class Img_Canvas(QWidget):
 
         self.update()
 
-
-
-
     def cut_to_clipboard(self):
-        # nothing to cut
         if not self.image or self.image.isNull():
             return
 
-        # snapshot for undo (do this BEFORE any change)
         self.mark_state()
 
-        # 1) Put a *copy* of the image (QImage) on the clipboard to avoid shared buffers
+        # Put PNG bytes on the clipboard (no shared buffers)
         img_copy = self.image.toImage().copy()
-        QGuiApplication.clipboard().setImage(img_copy)
+        ba = QByteArray()
+        buf = QBuffer(ba)
+        buf.open(QIODevice.OpenModeFlag.WriteOnly)
+        img_copy.save(buf, b"PNG")
+        buf.close()
+        md = QMimeData()
+        md.setData("image/png", ba)
+        QGuiApplication.clipboard().setMimeData(md)
 
-        # 2) Replace the canvas pixmap with a fresh transparent one (same size)
+        # Replace canvas with a fresh transparent pixmap (same size)
         size = self.image.size()
         new_pm = QPixmap(size.width(), size.height())
-        new_pm.fill(Qt.transparent)
+        new_pm.fill(TRANSPARENT)  # <— use the constant here
         self.image = new_pm
 
-        # 3) repaint
         self.update()
-
 
 
 

@@ -7,7 +7,8 @@ from PyQt6 import QtCore
 from PyQt6.QtCore import QRectF
 import numpy as np
 from image_menu_functions import imf
-from selection_tools_functions import rectangular_selection
+from SelectionTools import SelectionTools
+from SelectionManager import SelectionManager
 
 from PyQt6.QtWidgets import (
     QApplication,
@@ -50,6 +51,10 @@ class Img_Canvas(QWidget):
         self.sel_active = False
         self.sel_frozen = False                                 # Selection is finalized with Enter
         self.sel_points = []
+
+        self.sel_mgr = SelectionManager()                       # Selection state holder
+        self.active_mask = None
+        self.ops_since_freeze = False
 
 
     def make_checker_brush(self, tile=16):
@@ -192,6 +197,7 @@ class Img_Canvas(QWidget):
                 if pos_i is not None:
                     self.rect_anchor = pos_i
                     self.rect_current = pos_i
+                    self.sel_mgr.rect_start(pos_i.x(), pos_i.y())
                     self.update()
                 return
         if event.button() == Qt.MouseButton.LeftButton and self.sel_active and self.sel_mode == "lasso":
@@ -202,6 +208,7 @@ class Img_Canvas(QWidget):
                         self.sel_points = [pos_i]
                     else:
                         self.sel_points.append(pos_i)
+                    self.sel_mgr.lasso_press(pos_i.x(), pos_i.y())
                     self.update()
                 return
 
@@ -210,6 +217,7 @@ class Img_Canvas(QWidget):
                 pos_i = self.widget_to_image(event.position().toPoint())
                 if pos_i is not None:
                     self.sel_points.append(pos_i)
+                    self.sel_mgr.polygon_add_vertex(pos_i.x(), pos_i.y())
                     self.update()
                 return
 
@@ -256,6 +264,7 @@ class Img_Canvas(QWidget):
             if pos_i is not None:
                 if self.sel_points[-1] != pos_i:
                     self.sel_points.append(pos_i)
+                    self.sel_mgr.lasso_move(pos_i.x(), pos_i.y(), bool(event.buttons() & Qt.LeftButton))
                     self.update()
             return
 
@@ -265,6 +274,7 @@ class Img_Canvas(QWidget):
             pos_i = self.widget_to_image(pos_w)
             if pos_i is not None:
                 self.rect_current = pos_i
+                self.sel_mgr.rect_update(pos_i.x(), pos_i.y())
                 self.update()
             return
 
@@ -282,6 +292,8 @@ class Img_Canvas(QWidget):
     def mouseReleaseEvent(self, event):
 
         if self.sel_active and self.sel_mode == "lasso" and self.sel_points and not self.sel_frozen:
+
+            self.sel_mgr.lasso_release()
             self.update()
             return
 
@@ -345,67 +357,6 @@ class Img_Canvas(QWidget):
         q_img = QImage(rgb.data, width, height, bytes_per_line, QImage.Format.Format_RGB888)
         return q_img.copy()
 
-    def _confirm_rect_selection(self):
-
-
-        if not (self.image and self.rect_anchor and self.rect_current):
-            self.cancel_selection()
-            return
-
-        bgr = imf.qpixmap_to_cv2(self.image)
-        if bgr is None:
-            self.cancel_selection()
-            return
-
-        p1 = (int(self.rect_anchor.x()), int(self.rect_anchor.y()))
-        p2 = (int(self.rect_current.x()), int(self.rect_current.y()))
-
-        h, w = bgr.shape[:2]
-
-
-        cropped_bgr = rectangular_selection(bgr, p1, p2)
-
-        self.set_image(imf.cv2_to_qpixmap(cropped_bgr))
-        self.cancel_selection()
-
-
-    def _confirm_polygon_selection(self):
-        if not (self.image and self.sel_points and len(self.sel_points) >= 3):
-            self.cancel_selection()
-            return
-
-        from selection_tools_functions import polygon_selection
-        bgr = imf.qpixmap_to_cv2(self.image)
-        if bgr is None:
-            self.cancel_selection()
-            return
-
-        pts = [(p.x(), p.y()) for p in self.sel_points]
-
-        result_bgr = polygon_selection(bgr, pts, mode="masked_bgr")
-
-        self.set_image(imf.cv2_to_qpixmap(result_bgr))
-        self.cancel_selection()
-
-    def _confirm_lasso_selection(self):
-        if not (self.image and self.sel_points and len(self.sel_points) >= 2):
-            self.cancel_selection()
-            return
-
-        from selection_tools_functions import lasso_selection
-
-        bgr = imf.qpixmap_to_cv2(self.image)
-        if bgr is None:
-            self.cancel_selection()
-            return
-
-        pts = [(p.x(), p.y()) for p in self.sel_points]
-
-        result_bgr = lasso_selection(bgr, pts)
-        self.set_image(imf.cv2_to_qpixmap(result_bgr))
-        self.cancel_selection()
-
-
 
     def start_selection(self, mode: str):
 
@@ -423,6 +374,8 @@ class Img_Canvas(QWidget):
         self.sel_points = []
         self.setCursor(Qt.CursorShape.CrossCursor)
         self.setFocus()
+
+        self.sel_mgr.start(mode, min_dist=2)
         self.update()
 
     def cancel_selection(self):
@@ -431,6 +384,11 @@ class Img_Canvas(QWidget):
         self.sel_frozen = False
         self.rect_anchor = None
         self.rect_current = None
+        self.sel_points = []
+        self.sel_mgr.cancel()
+        self.active_mask = None
+        self.ops_since_freeze = False
+
         self.setCursor(Qt.CursorShape.ArrowCursor)
         self.update()
 
@@ -476,23 +434,26 @@ class Img_Canvas(QWidget):
 
         if self.sel_active and self.sel_mode in ("rect","lasso", "poly"):
             if event.key() in (Qt.Key.Key_Return, Qt.Key.Key_Enter):
-                can_freeze = (
-                (self.sel_mode == "rect" and self.rect_anchor and self.rect_current) or
-                (self.sel_mode in "lasso" and len(self.sel_points) >= 2) or
-                (self.sel_mode == "poly" and len (self.sel_points) >= 3)
-                )
 
-                if can_freeze and not self.sel_frozen:
-                    self.sel_frozen = True
-                    self.setCursor(Qt.CursorShape.ArrowCursor)
-                    self.update()
-                elif self.sel_frozen:
-                    if self.sel_mode == "rect":
-                        self._confirm_rect_selection()
-                    elif self.sel_mode == "lasso":
-                        self._confirm_lasso_selection()
-                    elif self.sel_mode == "poly":
-                        self._confirm_polygon_selection()
+                if not self.sel_mgr.state.frozen:
+                    if self.sel_mgr.freeze():
+                        self.sel_frozen = True
+
+                        bgr = imf.qpixmap_to_cv2(self.image)
+
+                        if bgr is None:
+                            self.cancel_selection()
+                            return
+
+                        h, w = bgr.shape[:2]
+
+                        self.active_mask = self.sel_mgr.mask((h, w))
+                        self.ops_since_freeze = False
+                        self.setCursor(Qt.CursorShape.ArrowCursor)
+                        self.update()
+                    return
+
+                self.cancel_selection()
                 return
 
             if event.key() == Qt.Key.Key_Escape:

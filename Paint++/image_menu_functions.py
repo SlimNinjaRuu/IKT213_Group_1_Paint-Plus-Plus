@@ -1,7 +1,7 @@
 # image_menu_functions.py
 import cv2
 import numpy as np
-from PyQt6.QtGui import QPixmap, QImage
+from PyQt6.QtGui import QPixmap, QImage, QMouseEvent
 from PyQt6.QtWidgets import QInputDialog, QMessageBox
 
 class imf:
@@ -163,6 +163,7 @@ class imf:
 
         # Sets the cropped QPixmap as canvas
         self.canvas.set_image(qpix)
+
     def resize(self):
 
         pix = self.canvas.pixmap()

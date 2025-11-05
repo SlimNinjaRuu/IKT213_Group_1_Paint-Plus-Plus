@@ -5,10 +5,7 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="3d484651-8040-42ef-b6b3-7b2286c5c8bf" name="Changes" comment="">
-      <change beforePath="$PROJECT_DIR$/.idea/IKT213_Group_1_Paint-Plus-Plus.iml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/IKT213_Group_1_Paint-Plus-Plus.iml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Paint++/img_canvas.py" beforeDir="false" afterPath="$PROJECT_DIR$/Paint++/img_canvas.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />

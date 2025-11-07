@@ -54,7 +54,7 @@ class SelectionManager:
 
         # Needs at least 2 pints to form a path
         if state.mode == "lasso":
-            return len(state.points) >= 2
+            return len(state.points) >= 3
 
         return False
 
@@ -79,7 +79,7 @@ class SelectionManager:
         if state.mode == "rect" and not state.frozen:
             state.rect_anchor = (int(x), int(y))            # First corner (on mouse click)
             state.rect_current = state.rect_anchor          # Second corner (follows mouse)
-
+            return True
         return False
 
 
@@ -172,12 +172,47 @@ class SelectionManager:
         if state.mode == "poly" and len(state.points) >= 3:
             return SelectionTools.polygon_mask(hw, state.points)
 
-        if state.mode == "lasso" and len(state.points) >= 2:
+        if state.mode == "lasso" and len(state.points) >= 3:
             return SelectionTools.lasso_mask(hw, state.points)
 
         return np.zeros(hw, dtype=np.uint8)
 
 
+    def has_frozen_selcetion(self) -> bool:
+        return self.state.frozen and self.is_ready()
 
+    def bbox(self, hw):
+
+        mask = self.mask(hw)
+        if mask is None or mask.size == 0:
+            return None
+        return SelectionTools.bbox_from_mask(mask)
+
+    def crop(self, bgr: np.ndarray, strict: bool = False):
+
+        if not self.has_frozen_selcetion():
+            return None
+
+        h, w = bgr.shape[:2]
+        mask = self.mask((h, w))
+
+        if mask is None or mask.size == 0:
+            return None
+
+        return SelectionTools.crop_to_selection(bgr, mask, strict)
+
+
+    def apply_in_selection(self, bgr: np.ndarray, op_func):
+
+        if not self.has_frozen_selcetion():
+            return None
+
+        h, w = bgr.shape[:2]
+        mask = self.mask((h, w))
+
+        if mask is None:
+            return None
+
+        return SelectionTools.apply_in_mask(bgr, op_func, mask)
 
 

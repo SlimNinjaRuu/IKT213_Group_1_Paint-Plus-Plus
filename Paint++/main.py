@@ -9,9 +9,9 @@ from PyQt6.QtGui import QPainter, QPixmap, QColor, QBrush, QPen, QImageReader
 from PyQt6.QtWidgets import (
     QApplication,
     QWidget,
-    QPushButton,
+    QDockWidget,
     QMainWindow,
-    QLabel,
+    QFrame,
     QMenu,
     QCheckBox,
     QStatusBar,
@@ -19,11 +19,8 @@ from PyQt6.QtWidgets import (
 )
 from img_canvas import Img_Canvas
 from image_menu_functions import imf
-from tools_menu_functions import tools
 
 import sys
-
-
 
 def main():
 
@@ -37,8 +34,8 @@ def main():
     window.edit_menu()
     window.image_menu()
     window.tools_menu()
+    window.shapes_menu()
     app.exec()
-
 
 class MainWindow(QMainWindow):
 
@@ -46,14 +43,13 @@ class MainWindow(QMainWindow):
         super().__init__()
         self.setWindowTitle("Paint++")
         self.resize(1920, 1080)
-
-        self.canvas = Img_Canvas()                                  # Creates an instance of the canvas class
+        self.panning = True
+        self.canvas = Img_Canvas(imf)                                  # Creates an instance of the canvas class
+        self.canvas.colorPicked.connect(self.on_color_picked)
         self.scroll = QScrollArea()                                 # Creates a scroll area
 
         self.imf = imf(self.canvas)
-        self.tools = tools(self.canvas)
         self.undo_history = []                                      # List to store previous image states for undo function
-
 
         self.scroll.setWidget(self.canvas)                          # Puts the canvas inside the scroll area
         self.scroll.setWidgetResizable(False)
@@ -64,6 +60,50 @@ class MainWindow(QMainWindow):
         self.setStatusBar(self.status)
 
         self.current_path = None                                    # Tracks current file path
+
+        # Create a dock panel
+        dock = QDockWidget("", self)
+        dock.setFeatures(QDockWidget.DockWidgetFeature.NoDockWidgetFeatures)
+        dock.setAllowedAreas(Qt.DockWidgetArea.LeftDockWidgetArea | Qt.DockWidgetArea.RightDockWidgetArea)
+
+        tool_panel = QWidget()
+        layout = QVBoxLayout(tool_panel)
+
+        # Add checkbox
+        self.cb_shape_fill = QCheckBox("Shape fill")
+        layout.addWidget(self.cb_shape_fill)
+
+        dock.setWidget(tool_panel)
+        self.addDockWidget(Qt.DockWidgetArea.LeftDockWidgetArea, dock)
+
+        self.cb_shape_fill.stateChanged.connect(self.canvas.set_fill_enabled)
+
+        # Color preview box
+        self.color_preview = QFrame()
+        self.color_preview.setFixedSize(60, 60)
+        self.color_preview.setStyleSheet("background-color: black; border: 1px solid #333; border-radius: 4px;")
+
+        layout.addSpacing(60)
+
+        # PyQt6 (horizontal centering)
+        layout.addWidget(self.color_preview, alignment=Qt.AlignmentFlag.AlignHCenter)
+
+        layout.addStretch(1)
+
+    def update_color_preview(self, color: QColor):
+        self.color_preview.setStyleSheet(
+            f"background-color: {color.name()}; border: 1px solid #333; border-radius: 4px;"
+        )
+
+    def on_color_picked(self, color: QColor):
+        # Update pen color in canvas
+        self.canvas.pen_color = color
+
+        # Update preview box
+        self.update_color_preview(color)
+
+        # Optional: show message in status bar
+        self.status.showMessage(f"Picked color: {color.name()}", 2000)
 
     #### Undo Functions
     def save_state(self):
@@ -117,7 +157,7 @@ class MainWindow(QMainWindow):
 
         ##### Quit Button in File-menu #####
         quit_ = QAction(self.style().standardIcon(QStyle.StandardPixmap.SP_BrowserStop), "Exit Program", self)
-        quit_.triggered.connect(self.toolbar_button_clicked)
+        quit_.triggered.connect(self.exit_program)
 
         ##### Adds the Buttons to the menu #####
         file_menu = menu.addMenu("&File")
@@ -128,6 +168,8 @@ class MainWindow(QMainWindow):
         file_menu.addAction(properties)
         file_menu.addAction(quit_)
 
+    def exit_program(self):
+        QApplication.quit()
 
     def edit_menu(self):
         menu = self.menuBar()
@@ -218,7 +260,12 @@ class MainWindow(QMainWindow):
 
         # Makes Cropping and resizing
         crop = QAction(QIcon("icons/icons8-crop.svg"), "Crop", self)
-        crop.triggered.connect(self.imf.selective_crop)
+        crop.triggered.connect(lambda: [self.save_state(), self.imf.request_crop(strict=False)])
+        image_menu.addAction(crop)
+
+        strict_crop = QAction(QIcon("icons/icons8-crop.svg"), "Strict Crop", self)
+        strict_crop.triggered.connect(lambda: [self.save_state(), self.imf.request_crop(strict=True)])
+        image_menu.addAction(strict_crop)
 
         resize = QAction(QIcon("icons/icons8-resize.svg"), "Resize", self)
         resize.triggered.connect(lambda :[self.save_state(), self.imf.resize()])
@@ -247,9 +294,30 @@ class MainWindow(QMainWindow):
         orientation_menu.addAction(flip_horizontal)
         orientation_menu.addAction(flip_vertical)
 
+    def shapes_menu(self):
+        menu = self.menuBar()
+        shape_menu = menu.addMenu("&Shapes")
+
+        rect = QAction(QIcon("icons/icons8-paint.svg"), "Rectangle", self)
+        rect.triggered.connect(self.canvas.toggle_rect_mode)
+
+        ellipse = QAction(QIcon("icons/icons8-paint.svg"), "Ellipse", self)
+        ellipse.triggered.connect(self.canvas.toggle_ellipse_mode)
+
+        triangle = QAction(QIcon("icons/icons8-paint.svg"), "Triangle", self)
+        triangle.triggered.connect(self.canvas.toggle_triangle_mode)
+
+        shape_menu.addAction(rect)
+        shape_menu.addAction(ellipse)
+        shape_menu.addAction(triangle)
+
+
     def tools_menu(self):
         menu = self.menuBar()
         tools_menu = menu.addMenu("&Tools")
+
+        panning = QAction("Move", self)
+        panning.triggered.connect(self.canvas.toggle_panning_mode)
 
         zoom_in = QAction(QIcon("icons/icons8-zoom.svg"), "Zoom In", self)
         zoom_in.setShortcut("Ctrl++")
@@ -263,13 +331,33 @@ class MainWindow(QMainWindow):
         reset_zoom.setShortcut("Ctrl+0")
         reset_zoom.triggered.connect(self.canvas.reset_zoom)
 
-        draw = QAction(QIcon("icons/icons8-draw.svg"), "Draw", self)
-        draw.triggered.connect(self.tools.lasso_draw)
-
-        tools_menu.addAction(draw)
+        tools_menu.addAction(panning)
         tools_menu.addAction(zoom_in)
         tools_menu.addAction(zoom_out)
         tools_menu.addAction(reset_zoom)
+
+        # Adding paint Submenu
+        paint_menu = QMenu("&Paint", self)
+        tools_menu.addMenu(paint_menu)
+
+        paint = QAction(QIcon("icons/icons8-paint.svg"), "Brush", self)
+        # paint.setCheckable(True)
+        paint.triggered.connect(self.canvas.toggle_brush_mode)
+
+        spray = QAction(QIcon("icons/icons8-spray.svg"), "Spray", self)
+        # spray.setCheckable(True)
+        spray.triggered.connect(self.canvas.toggle_spray_mode)
+
+        text = QAction(QIcon("icons/icons8-text.svg"), "Text", self)
+        text.triggered.connect(self.canvas.toggle_text_mode)
+
+        color_pick = QAction("Color Picker", self)
+        color_pick.triggered.connect(self.canvas.color_picker)
+
+        paint_menu.addAction(paint)
+        paint_menu.addAction(spray)
+        paint_menu.addAction(text)
+        paint_menu.addAction(color_pick)
 
     def update_zoom_status(self):
         if self.canvas.image:

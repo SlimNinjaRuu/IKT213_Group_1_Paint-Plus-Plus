@@ -62,3 +62,50 @@ class SelectionTools:
     def lasso_mask(hw, pts):
         return SelectionTools.polygon_mask(hw, pts)
 
+    @staticmethod
+    def bbox_from_mask(mask: np.ndarray):
+
+        nz = cv2.findNonZero(mask)
+        if nz is None or len(nz) == 0:
+            return None
+
+        x, y, w, h = cv2.boundingRect(nz)
+        return (x, y, w, h)
+
+    @staticmethod
+    def crop_to_selection(bgr: np.ndarray, mask: np.ndarray, strict: bool = False):
+
+        bb = SelectionTools.bbox_from_mask(mask)
+        if bb is None:
+            return None
+
+        x, y, w, h, = bb
+
+        H, W = bgr.shape[:2]
+
+        x0 = max(0, min(x, W))
+        y0 = max(0, min(y, H))
+        x1 = max(0, min(x + w, W))
+        y1 = max(0, min(y + h, H))
+
+        if x1 <= x0 or y1 <= y0:
+            return None
+
+        crop = bgr[y0:y1, x0:x1].copy()
+
+        if strict:
+            submask = mask[y0:y1, x0:x1]
+            if submask.dtype != np.uint8:
+                submask = submask.astype(np.uint8)
+            crop[submask == 0] = 0
+        return crop
+
+
+    @staticmethod
+    def apply_in_mask(bgr: np.ndarray, op_func,  mask: np.ndarray):
+
+        modified = op_func(bgr.copy())
+        out = bgr.copy()
+        out[mask > 0] = modified[mask > 0]
+        return out
+

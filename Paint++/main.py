@@ -1,4 +1,5 @@
 import os
+from bisect import bisect_left
 
 # imports different classes from the PyQt library
 from PyQt6.QtCore import QSizeF, QSize
@@ -20,6 +21,7 @@ from PyQt6.QtWidgets import (
     QToolBar, QStyle, QFileDialog, QMessageBox, QScrollArea, QVBoxLayout, QLayout, QVBoxLayout, QHBoxLayout, QPushButton, QLabel, QSpacerItem, QSizePolicy, QTabWidget, QDialog)
 from img_canvas import Img_Canvas
 from image_menu_functions import imf
+from Filters import Filters
 
 import sys
 
@@ -36,6 +38,7 @@ def main():
     window.image_menu()
     window.tools_menu()
     window.shapes_menu()
+    window.filters_menu()
     app.exec()
 
 class MainWindow(QMainWindow):
@@ -50,6 +53,7 @@ class MainWindow(QMainWindow):
         self.scroll = QScrollArea()                                 # Creates a scroll area
 
         self.imf = imf(self.canvas)
+        self.filters = Filters(self.canvas, self.imf)
         self.undo_history = []                                      # List to store previous image states for undo function
 
         self.scroll.setWidget(self.canvas)                          # Puts the canvas inside the scroll area
@@ -383,6 +387,61 @@ class MainWindow(QMainWindow):
         paint_menu.addAction(spray)
         paint_menu.addAction(text)
         paint_menu.addAction(color_pick)
+
+
+    def filters_menu(self):
+        menu = self.menuBar()
+        filters_menu = menu.addMenu("&Filters")
+
+        blur_menu = filters_menu.addMenu("Blur")
+
+        gaussian = QAction( "Gaussian", self)
+        gaussian.triggered.connect(lambda: [self.save_state(), self.filters.gaussian_blur()])
+
+        median = QAction("Median Filter", self)
+        median.triggered.connect(lambda: [self.save_state(), self.filters.median_blur()])
+
+        bilateral = QAction("Bilateral Filter", self)
+        bilateral.triggered.connect(lambda: [self.save_state(), self.filters.bilateral_filter()])
+
+        blur_menu.addAction(gaussian)
+        blur_menu.addAction(median)
+        blur_menu.addAction(bilateral)
+
+        edge_menu = filters_menu.addMenu("Edge Detection")
+
+        sobel = QAction( "Sobel", self)
+        sobel.triggered.connect(lambda: [self.save_state(), self.filters.sobel_filter()])
+
+        canny = QAction( "Canny", self)
+        canny.triggered.connect(lambda: [self.save_state(), self.filters.canny_edges()])
+
+        edge_menu.addAction(sobel)
+        edge_menu.addAction(canny)
+
+        threshold_menu = filters_menu.addMenu("Thresholding")
+
+        binary = QAction( "Binary", self)
+        binary.triggered.connect(lambda: [self.save_state(), self.filters.binary_threshhold()])
+
+        adaptive_threshold = QAction( "Adaptive Threshold", self)
+        adaptive_threshold.triggered.connect(lambda: [self.save_state(), self.filters.adaptive_thresholding()])
+
+        threshold_menu.addAction(binary)
+        threshold_menu.addAction(adaptive_threshold)
+
+        filters_menu.addSeparator()
+
+        histogram = QAction( "Histogram Equalization", self)
+        histogram.triggered.connect(lambda: [self.save_state(), self.filters.histogram_operation()])
+
+        grayscale = QAction( "Grayscale", self)
+        grayscale.triggered.connect(lambda: [self.save_state(), self.filters.grayscale()])
+
+        filters_menu.addAction(histogram)
+        filters_menu.addAction(grayscale)
+
+
 
     def update_zoom_status(self):
         if self.canvas.image:

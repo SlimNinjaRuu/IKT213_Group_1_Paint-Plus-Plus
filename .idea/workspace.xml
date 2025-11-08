@@ -5,8 +5,8 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="3d484651-8040-42ef-b6b3-7b2286c5c8bf" name="Changes" comment="">
+      <change afterPath="$PROJECT_DIR$/Paint++/Filters.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Paint++/img_canvas.py" beforeDir="false" afterPath="$PROJECT_DIR$/Paint++/img_canvas.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Paint++/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/Paint++/main.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />

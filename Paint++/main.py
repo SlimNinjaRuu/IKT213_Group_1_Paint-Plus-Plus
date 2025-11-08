@@ -125,7 +125,9 @@ class MainWindow(QMainWindow):
         self.canvas.set_image(previous.copy())
         self.status.showMessage(f"Undo successfull. {len(self.undo_history) - 1} undos remaining")
 
-
+    def open_new_instance(self):
+        import subprocess, sys
+        subprocess.Popen([sys.executable, __file__])
 
     #### This method creates the dropdown menu for File #####
     #### It does not contain the operations of the buttons #####
@@ -135,7 +137,7 @@ class MainWindow(QMainWindow):
 
         ##### New button to create a new image ####
         new_ = QAction(self.style().standardIcon(QStyle.StandardPixmap.SP_FileIcon), "New", self)
-        new_.triggered.connect(self.toolbar_button_clicked)
+        new_.triggered.connect(self.open_new_instance)
 
         ##### Open file in File-menu #####
         open_ = QAction(self.style().standardIcon(QStyle.StandardPixmap.SP_DirOpenIcon), "Open", self)
@@ -151,9 +153,9 @@ class MainWindow(QMainWindow):
         save_as.triggered.connect(self.save_as)
         save_as.setShortcut(QKeySequence.StandardKey.SaveAs)
 
-        ##### Properties Button in File-menu
-        properties = QAction(QIcon("icons/icons8-settings.svg"), "Settings", self)
-        properties.triggered.connect(self.toolbar_button_clicked)
+        # Allows user to change the canvas size, uses the resize_canvas method from img_canvas
+        canvas_size = QAction(self.style().standardIcon(QStyle.StandardPixmap.SP_FileDialogDetailedView), "Canvas Size",self)
+        canvas_size.triggered.connect(self.canvas.resize_canvas)
 
         ##### Quit Button in File-menu #####
         quit_ = QAction(self.style().standardIcon(QStyle.StandardPixmap.SP_BrowserStop), "Exit Program", self)
@@ -165,8 +167,14 @@ class MainWindow(QMainWindow):
         file_menu.addAction(open_)
         file_menu.addAction(save)
         file_menu.addAction(save_as)
-        file_menu.addAction(properties)
+
+        settings_menu = file_menu.addMenu(QIcon("icons/icons8-settings.svg"), "&Properties")
+
+        settings_menu.addAction(canvas_size)
+
         file_menu.addAction(quit_)
+
+
 
     def exit_program(self):
         QApplication.quit()
@@ -226,14 +234,9 @@ class MainWindow(QMainWindow):
         cut_action.setShortcut(QKeySequence.StandardKey.Cut) #cut function
         cut_action.triggered.connect(self.toolbar_button_clicked)
 
-        # Allows user to change the canvas size, uses the resize_canvas method from img_canvas
-        canvas_size = QAction(self.style().standardIcon(QStyle.StandardPixmap.SP_FileDialogDetailedView), "Canvas Size", self)
-        canvas_size.triggered.connect(self.canvas.resize_canvas)
-
         edit_menu.addAction(paste_action)
         edit_menu.addAction(cut_action)
         edit_menu.addAction(copy_action)
-        edit_menu.addAction(canvas_size)
 
 
     def image_menu(self):
@@ -339,12 +342,16 @@ class MainWindow(QMainWindow):
         text = QAction(QIcon("icons/icons8-text.svg"), "Text", self)
         text.triggered.connect(self.canvas.toggle_text_mode)
 
+        eraser = QAction(QIcon("icons/icons8-paint.svg"), "Eraser", self)
+        eraser.triggered.connect(self.canvas.toggle_eraser_mode)
+
         color_pick = QAction("Color Picker", self)
         color_pick.triggered.connect(self.canvas.color_picker)
 
         paint_menu.addAction(paint)
         paint_menu.addAction(spray)
         paint_menu.addAction(text)
+        paint_menu.addAction(eraser)
         paint_menu.addAction(color_pick)
 
     def update_zoom_status(self):

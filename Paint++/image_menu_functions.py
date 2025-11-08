@@ -17,16 +17,16 @@ class imf:
         if bgr is None:
             return QPixmap()
 
-        bgr = bgr.copy()
+        ## bgr = bgr.copy()
 
         # takes the cv2 bgr image and makes it rgb image
-        rgb = cv2.cvtColor(bgr, cv2.COLOR_BGR2RGB)
+        rgba = cv2.cvtColor(bgr, cv2.COLOR_BGRA2RGBA)
 
-        height, width, channels =  rgb.shape
+        height, width, channels =  rgba.shape
         bytes_per_line = width * channels
 
         # makes rgb to QImage
-        qimg = QImage(rgb.data, width, height, bytes_per_line, QImage.Format.Format_RGB888)
+        qimg = QImage(rgba.data, width, height, bytes_per_line, QImage.Format.Format_ARGB32)
 
         # returns Qpixmap from QImage
         return QPixmap.fromImage(qimg.copy())
@@ -37,26 +37,26 @@ class imf:
         if pixmap.isNull():
             return None
 
-        # Makes a QImage in rgb from QPixmap
-        qimg = pixmap.toImage().convertToFormat(QImage.Format.Format_RGB888)
+        # Makes a QImage in rgba from QPixmap
+        qimg = pixmap.toImage().convertToFormat(QImage.Format.Format_ARGB32)
 
         # QImage height and width
         w = qimg.width()
         h = qimg.height()
-        bytes_per_line = qimg.bytesPerLine()
+        ## bytes_per_line = qimg.bytesPerLine()
 
         # Will make a deep copy
         ptr = qimg.bits()
         ptr.setsize(qimg.sizeInBytes())
 
-        # Creates numpy array from, QImage
-        arr = np.frombuffer(ptr, np.uint8).reshape((h, bytes_per_line))
+        # Creates numpy array from, QImage              ## 4
+        arr = np.frombuffer(ptr, np.uint8).reshape((h, w, 4))
 
-        arr = arr[:, :w*3].reshape((h, w, 3))
+        ## arr = arr[:, :w*3].reshape((h, w, 3))
 
         # Converts RGB array to BGR and returns it
-        bgr = cv2.cvtColor(arr, cv2.COLOR_RGB2BGR)
-        return bgr.copy()
+        bgra = cv2.cvtColor(arr, cv2.COLOR_RGBA2BGRA)
+        return bgra.copy()
 
     # === ROTATE ===
     def rotate_CW(self):
@@ -150,9 +150,10 @@ class imf:
 
         # Makes a bgr
         cv = self.qpixmap_to_cv2(pix)
+        bgr = cv2.cvtColor(cv, cv2.COLOR_RGBA2BGR)
 
         # User selects ROI
-        r = cv2.selectROI("Crop select", cv)
+        r = cv2.selectROI("Crop select", bgr)
 
         # Crops the image over the selected ROI
         crop_image = cv[int(r[1]):int(r[1] + r[3]), int(r[0]):int(r[0] + r[2])]

@@ -5,17 +5,9 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="3d484651-8040-42ef-b6b3-7b2286c5c8bf" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/Paint++/icons/icons8-spray.svg" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Paint++/icons/icons8-text.svg" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Paint++/SelectionManager.py" beforeDir="false" afterPath="$PROJECT_DIR$/Paint++/SelectionManager.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Paint++/SelectionTools.py" beforeDir="false" afterPath="$PROJECT_DIR$/Paint++/SelectionTools.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Paint++/icons/icons8-draw.svg" beforeDir="false" afterPath="$PROJECT_DIR$/Paint++/icons/icons8-paint.svg" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Paint++/image_menu_functions.py" beforeDir="false" afterPath="$PROJECT_DIR$/Paint++/image_menu_functions.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Paint++/img_canvas.py" beforeDir="false" afterPath="$PROJECT_DIR$/Paint++/img_canvas.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Paint++/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/Paint++/main.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Paint++/tools_menu_functions.py" beforeDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -58,26 +50,26 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent"><![CDATA[{
-  "keyToString": {
-    "ModuleVcsDetector.initialDetectionPerformed": "true",
-    "Python._pydev_execfile.executor": "Run",
-    "Python.clipboard_functions.executor": "Run",
-    "Python.image_menu.executor": "Run",
-    "Python.img_canvas.executor": "Run",
-    "Python.main.executor": "Run",
-    "Python.selection tools.executor": "Run",
-    "Python.selection_tools_functions.executor": "Run",
-    "RunOnceActivity.ShowReadmeOnStart": "true",
-    "RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252": "true",
-    "RunOnceActivity.git.unshallow": "true",
-    "git-widget-placeholder": "integrate/petter-brush+selection",
-    "junie.onboarding.icon.badge.shown": "true",
-    "last_opened_file_path": "C:/Users/pette/IKT213_Group_1_Paint-Plus-Plus/Paint++",
-    "settings.editor.selected.configurable": "com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable",
-    "to.speed.mode.migration.done": "true"
+  <component name="PropertiesComponent">{
+  &quot;keyToString&quot;: {
+    &quot;ModuleVcsDetector.initialDetectionPerformed&quot;: &quot;true&quot;,
+    &quot;Python._pydev_execfile.executor&quot;: &quot;Run&quot;,
+    &quot;Python.clipboard_functions.executor&quot;: &quot;Run&quot;,
+    &quot;Python.image_menu.executor&quot;: &quot;Run&quot;,
+    &quot;Python.img_canvas.executor&quot;: &quot;Run&quot;,
+    &quot;Python.main.executor&quot;: &quot;Run&quot;,
+    &quot;Python.selection tools.executor&quot;: &quot;Run&quot;,
+    &quot;Python.selection_tools_functions.executor&quot;: &quot;Run&quot;,
+    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
+    &quot;git-widget-placeholder&quot;: &quot;integrate/petter-brush+selection&quot;,
+    &quot;junie.onboarding.icon.badge.shown&quot;: &quot;true&quot;,
+    &quot;last_opened_file_path&quot;: &quot;C:/Users/pette/IKT213_Group_1_Paint-Plus-Plus/Paint++&quot;,
+    &quot;settings.editor.selected.configurable&quot;: &quot;com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable&quot;,
+    &quot;to.speed.mode.migration.done&quot;: &quot;true&quot;
   }
-}]]></component>
+}</component>
   <component name="RecentsManager">
     <key name="CopyFile.RECENT_KEYS">
       <recent name="C:\Users\pette\IKT213_Group_1_Paint-Plus-Plus\Paint++" />

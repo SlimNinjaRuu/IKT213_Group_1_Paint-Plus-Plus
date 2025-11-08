@@ -3,6 +3,7 @@ import os
 # imports different classes from the PyQt library
 from PyQt6.QtCore import QSizeF, QSize
 from PyQt6 import QtGui
+from PyQt6.QtCore import Qt, QProcess
 from PyQt6.QtCore import *
 from PyQt6.QtGui import QAction, QIcon, QKeySequence, QPixmap, QImageReader, QImage, QImageIOHandler, QImageWriter
 from PyQt6.QtGui import QPainter, QPixmap, QColor, QBrush, QPen, QImageReader
@@ -13,10 +14,10 @@ from PyQt6.QtWidgets import (
     QMainWindow,
     QFrame,
     QMenu,
+    QColorDialog,
     QCheckBox,
     QStatusBar,
-    QToolBar, QStyle, QFileDialog, QMessageBox, QScrollArea, QVBoxLayout, QLayout
-)
+    QToolBar, QStyle, QFileDialog, QMessageBox, QScrollArea, QVBoxLayout, QLayout, QVBoxLayout, QHBoxLayout, QPushButton, QLabel, QSpacerItem, QSizePolicy, QTabWidget, QDialog)
 from img_canvas import Img_Canvas
 from image_menu_functions import imf
 
@@ -135,7 +136,7 @@ class MainWindow(QMainWindow):
 
         ##### New button to create a new image ####
         new_ = QAction(self.style().standardIcon(QStyle.StandardPixmap.SP_FileIcon), "New", self)
-        new_.triggered.connect(self.toolbar_button_clicked)
+        new_.triggered.connect(self.open_new_instance)
 
         ##### Open file in File-menu #####
         open_ = QAction(self.style().standardIcon(QStyle.StandardPixmap.SP_DirOpenIcon), "Open", self)
@@ -153,7 +154,7 @@ class MainWindow(QMainWindow):
 
         ##### Properties Button in File-menu
         properties = QAction(QIcon("icons/icons8-settings.svg"), "Settings", self)
-        properties.triggered.connect(self.toolbar_button_clicked)
+        properties.triggered.connect(self.open_properties_dialog)
 
         ##### Quit Button in File-menu #####
         quit_ = QAction(self.style().standardIcon(QStyle.StandardPixmap.SP_BrowserStop), "Exit Program", self)
@@ -167,6 +168,30 @@ class MainWindow(QMainWindow):
         file_menu.addAction(save_as)
         file_menu.addAction(properties)
         file_menu.addAction(quit_)
+
+    def open_properties_dialog(self):
+        dlg = QDialog(self)
+        dlg.setWindowTitle("Settings")
+
+        layout = QVBoxLayout(dlg)
+
+        btn_canvas = QPushButton("Canvas Size..", dlg)
+        btn_canvas.clicked.connect(lambda: self.canvas.resize_canvas())
+        layout.addWidget(btn_canvas)
+
+        btn_close = QPushButton("Close", dlg)
+        btn_close.clicked.connect(dlg.accept)
+        layout.addWidget(btn_close)
+
+        dlg.setLayout(layout)
+        dlg.resize(QSize(600, 600))
+        dlg.exec()
+
+    def open_new_instance(self):
+        import subprocess, sys, os
+        script = os.path.abspath(sys.argv[0])
+        QProcess.startDetached(sys.executable, [script])
+
 
     def exit_program(self):
         QApplication.quit()

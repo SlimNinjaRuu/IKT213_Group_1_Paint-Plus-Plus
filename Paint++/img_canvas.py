@@ -813,6 +813,7 @@ class Img_Canvas(QWidget):
         self.triangle_enabled = False
         self.text_enabled = False
         self.panning = False
+        self.eraser_enabled = False
 
         # Get QPixmap
         pix = self.image
@@ -823,7 +824,14 @@ class Img_Canvas(QWidget):
             return
 
         # Convert QPixmap to BGR
-        cv_image = self.imf.qpixmap_to_cv2(pix)
+        cv = self.imf.qpixmap_to_cv2(pix)
+
+        # Swap color to BGR if alpha channel is present
+        if cv is not None and cv.ndim == 3 and cv.shape[2] == 4:
+            cv = cv2.cvtColor(cv, cv2.COLOR_BGRA2RGBA)
+
+        # Do not convert for display/color picker
+        cv_image = cv
 
         window_name = "Color Picker"
 
@@ -846,8 +854,8 @@ class Img_Canvas(QWidget):
                 break
 
         # Extract BGR color at the clicked pixel
-        r, g, b = cv_image[clicked_pos["y"], clicked_pos["x"]]
-        self.pen_color = QColor(int(b), int(g), int(r))
+        b, g, r = cv_image[clicked_pos["y"], clicked_pos["x"]]
+        self.pen_color = QColor(int(r), int(g), int(b))
 
         self.colorPicked.emit(self.pen_color)
 

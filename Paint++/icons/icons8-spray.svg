@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 512 512" fill="none" stroke="red" stroke-width="24" stroke-linejoin="round" stroke-linecap="round">
+  <!-- Can Body -->
+  <rect x="156" y="152" width="200" height="300" rx="32"/>
+
+  <!-- Top Cap -->
+  <rect x="184" y="112" width="144" height="48" rx="16"/>
+
+  <!-- Nozzle -->
+  <rect x="232" y="80" width="48" height="32" rx="8"/>
+
+  <!-- Spray Dots -->
+  <circle cx="340" cy="96" r="8"/>
+  <circle cx="380" cy="86" r="7"/>
+  <circle cx="420" cy="78" r="6"/>
+  <circle cx="460" cy="70" r="5"/>
+</svg>

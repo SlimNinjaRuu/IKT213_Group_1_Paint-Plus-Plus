@@ -53,10 +53,8 @@ def polygon_points(image, window_name="Polygon select"):
     cv2.destroyWindow(window_name)
     return np.array(points, dtype=np.int32)
 
-def polygon_selection(image, mode="alpha_cropped"):
-
-    pts = polygon_points(image, window_name="Polygon select")
-    return extract_polygon(image, pts, mode=mode)
+def polygon_selection(image_bgr, pts, mode="alpha_cropped"):
+    return extract_polygon(image_bgr, np.asarray(pts, dtype=np.int32), mode=mode)
 
 def extract_polygon(image, pts, mode="alpha_cropped"):
 
@@ -166,25 +164,37 @@ def lasso_points(image, min_dist=2, window_name="Lasso select"):
     cv2.destroyWindow(window_name)
     return np.array(points, dtype=np.int32)
 
-def lasso_selection(image, min_dist=2):
-    pts = lasso_points(image, min_dist=min_dist, window_name="Lasso select")
-    return finalize_with_mask(image, pts)
+# Takes the points after lasso has been drawn on the Qt canvas
+def lasso_selection(image_bgr, pts):
+
+    pts = np.array(pts, dtype=np.int32)
+    if pts is None or len(pts) < 3:
+        return image_bgr.copy()
+
+    mask = np.zeros(image_bgr.shape[:2], dtype=np.uint8)
+    cv2.fillPoly(mask, [pts.astype(np.int32)], 255)
+
+
+    img_gray = cv2.cvtColor(image_bgr, cv2.COLOR_BGR2GRAY)
+    img_gray_bgr = cv2.cvtColor(img_gray, cv2.COLOR_GRAY2BGR)
+    out = image_bgr.copy()
+    out[mask > 0] = img_gray_bgr[mask > 0]
+    return out
 
 ##################################### LASSO #####################################
 
-def rectangular_selection(image):
-    x, y, w, h = cv2.selectROI("Rectangular select", image)
-    cv2.destroyWindow("Rectangular select")
-    if w == 0 or h == 0:
-        return image.copy()
+def rectangular_selection(image_bgr, p1, p2):
 
-    # out = image.copy()
-    roi = image[y:y+h, x:x+w]
-    # roi_gray = cv2.cvtColor(roi, cv2.COLOR_BGR2GRAY)
-    # roi_bgr  = cv2.cvtColor(roi_gray, cv2.COLOR_GRAY2BGR)
-    # out[y:y+h, x:x+w] = roi_bgr
-    # return out
-    return roi
+    x1, y1, = p1
+    x2, y2, = p2
+    x1, x2, = sorted((int(x1), int(x2)))
+    y1, y2, = sorted((int(y1), int(y2)))
+
+    if x2 <= x1 or y2 <= y1:
+        return image_bgr.copy()
+    return image_bgr[y1:y2, x1:x2].copy()
+
+
 
 # Demo
 def main():

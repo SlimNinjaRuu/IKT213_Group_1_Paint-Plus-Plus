@@ -1,7 +1,7 @@
 # imports different classes from the PyQt library
 from PyQt6 import QtGui
 import random
-from PyQt6.QtGui import QPainter, QPixmap, QColor, QBrush, QPen, QPolygon
+from PyQt6.QtGui import QPainter, QPixmap, QColor, QBrush, QPen, QPolygon, QImage
 from PyQt6.QtCore import Qt, QPoint, QSize, QRect, pyqtSignal
 import cv2
 from PyQt6 import QtCore
@@ -65,6 +65,7 @@ class Img_Canvas(QWidget):
 
         # For selecting brush
         self.brush_enabled = False
+        self.eraser_enabled = False
 
         # For selecting spray
         self.spray_enabled = False
@@ -129,23 +130,31 @@ class Img_Canvas(QWidget):
 
     ##### Loading Images #####
     def set_image(self, pix):
+        # Convert QPixmap to QImage so we can draw on it
+        if pix is not None and not pix.isNull():
+            self.image = pix.toImage()
+            # Ensure it has an alpha channel for transparency
+            if self.image.format() != QImage.Format.Format_ARGB32:
+                self.image = self.image.convertToFormat(QImage.Format.Format_ARGB32)
+        else:
+            self.image = None
 
-        self.image = pix                                        # Store the new image
-        self.offset = QPoint(0, 0)                              # Reset to center
+        self.offset = QPoint(0, 0)
         self.zoom_scale = 1.0
 
         if self.image is not None and not self.image.isNull():
-
             self.setMinimumSize(self.image.size())
+            if self.image.width() > self.width() or self.image.height() > self.image.height():
+                self.resize(self.image.size())
 
-            if self.image.width() > self.width() or self.image.height() > self.height():
-                self.resize(self.image.size())                      # Resize Widget to prefferd size
-
-        self.update()                                           # Redraw to show new image
+        self.update()
 
     def pixmap(self):
-        """Return the currently displayed QPixmap."""
-        return self.image if self.image is not None and not self.image.isNull() else None
+        """Return the currently displayed image as QPixmap."""
+        if self.image is not None and not self.image.isNull():
+            return QPixmap.fromImage(self.image)
+        return None
+
 
     def zoom_in(self):
         self.zoom_scale *= 1.25
@@ -180,7 +189,12 @@ class Img_Canvas(QWidget):
         # Where the image drawn after the users dragged it (self.offset)
         xi = int(x + self.offset.x())
         yi = int(y + self.offset.y())
-        p.drawPixmap(xi, yi, scaled_width, scaled_height, self.image)          # Draws the image with DrawPixmap
+        p.drawImage(xi, yi, self.image.scaled(
+            scaled_width,
+            scaled_height,
+            Qt.AspectRatioMode.KeepAspectRatio,
+            Qt.TransformationMode.SmoothTransformation
+        ))        # Draws the image with DrawPixmap
 
         # Draw border around the image
         if self.selected:
@@ -327,12 +341,13 @@ class Img_Canvas(QWidget):
             return
 
         # Computing position of mouse press
-        click_pos, image_origin, image_rect, xi, yi = self.mousePress_compute(event)
+        click_pos, image_origin, image_rect, xi, yi = result
 
         # Check if the click was inside the image rectangle
         if image_rect.contains(click_pos): # Inside
 
-            if (self.brush_enabled or self.spray_enabled or self.rect_enabled or self.ellipse_enabled or self.triangle_enabled or self.text_enabled):
+            # If brush mode is enabled then draw, not pan
+            if (self.brush_enabled or self.spray_enabled or self.rect_enabled or self.ellipse_enabled or self.triangle_enabled or self.text_enabled or getattr(self, "eraser_enabled", False)):
 
                 # Set drawing state as true
                 self.drawing = True
@@ -351,6 +366,14 @@ class Img_Canvas(QWidget):
                 painter = QtGui.QPainter(self.image)
                 pen = QPen(self.pen_color, self.pen_width)
                 painter.setPen(pen)
+
+                if getattr(self, "eraser_enabled", False):
+                    painter.setCompositionMode(QPainter.CompositionMode.CompositionMode_Clear)
+                    pen = QPen(Qt.GlobalColor.transparent, self.pen_width)
+
+                else:
+                    pen = QPen(self.pen_color, self.pen_width)
+                    painter.setPen(pen)
 
                 # Sets font for text
                 font = QtGui.QFont()
@@ -482,6 +505,27 @@ class Img_Canvas(QWidget):
             self.update()
             return
 
+        if getattr(self, "eraser_enabled", False) and self.drawing and (event.buttons() & Qt.MouseButton.LeftButton):
+            painter = QPainter(self.image)
+            painter.setRenderHint(QPainter.RenderHint.Antialiasing)
+            painter.setCompositionMode(QPainter.CompositionMode.CompositionMode_Clear)
+
+            eraser_pen = QPen(Qt.GlobalColor.transparent)
+            eraser_pen.setWidth(self.pen_width)
+            eraser_pen.setCapStyle(Qt.PenCapStyle.RoundCap)
+            eraser_pen.setJoinStyle(Qt.PenJoinStyle.RoundJoin)
+            painter.setPen(eraser_pen)
+
+            current_point = event.position().toPoint() - self.image_origin
+            last_point_on_image = self.last_point - self.image_origin
+
+            painter.drawLine(last_point_on_image, current_point)
+            painter.end()
+
+            self.last_point = event.position().toPoint()
+            self.update()
+            return
+
         if getattr(self, "spray_enabled", False) and self.drawing and (event.buttons() & Qt.MouseButton.LeftButton):
             # Creates painter object for drawing on image
             painter = QPainter(self.image)
@@ -557,7 +601,7 @@ class Img_Canvas(QWidget):
         if event.button() == Qt.MouseButton.LeftButton:
 
             if (getattr(self, "rect_enabled", False) or getattr(self, "triangle_enabled", False) or getattr(self, "brush_enabled", False)
-                            or getattr(self, "ellipse_enabled", False) or getattr(self, "spray_enabled", False) ):
+                            or getattr(self, "ellipse_enabled", False) or getattr(self, "spray_enabled", False) or getattr(self,"eraser_enabled", False)):
                 self.drawing = False
 
             # If brush tool was not active, stop panning
@@ -581,6 +625,8 @@ class Img_Canvas(QWidget):
             self.panning = False
             self.text_enabled = False
             self.picker_enabled = False
+            self.eraser_enabled = False
+
 
             brush_size, ok1 = QInputDialog.getInt(self, "Paintbrush size", "Enter size (1-100)", 5, 1, 100)
             if not ok1: return
@@ -602,6 +648,29 @@ class Img_Canvas(QWidget):
             self.panning = True
             self.setCursor(Qt.CursorShape.ArrowCursor)
 
+    def toggle_eraser_mode(self):
+        self.eraser_enabled = not self.eraser_enabled
+
+        if self.eraser_enabled:
+            # disable all other tools
+            self.brush_enabled = False
+            self.spray_enabled = False
+            self.rect_enabled = False
+            self.ellipse_enabled = False
+            self.triangle_enabled = False
+            self.text_enabled = False
+            self.picker_enabled = False
+            self.panning = False
+
+            size, ok = QInputDialog.getInt(self, "Eraser size", "Size (1-100)", 20, 1, 100)
+            if not ok: return
+
+            self.pen_width = size
+            self.setCursor(Qt.CursorShape.CrossCursor)
+        else:
+            self.panning = True
+            self.setCursor(Qt.CursorShape.ArrowCursor)
+
     def toggle_spray_mode(self):
         # Toggles the spray enabled state
         self.spray_enabled = not self.spray_enabled
@@ -616,6 +685,8 @@ class Img_Canvas(QWidget):
             self.panning = False
             self.text_enabled = False
             self.picker_enabled = False
+            self.eraser_enabled = False
+
 
             # Spray pixel thickness
             self.pen_width = 1
@@ -650,6 +721,7 @@ class Img_Canvas(QWidget):
             self.panning = False
             self.text_enabled = False
             self.picker_enabled = False
+            self.eraser_enabled = False
 
             outline_width, ok1 = QInputDialog.getInt(self, "Outline width", "Enter line thickness (1-100)", 5, 1, 100)
             if not ok1: return
@@ -690,6 +762,7 @@ class Img_Canvas(QWidget):
             self.text_enabled = False
             self.panning = False
             self.picker_enabled = False
+            self.eraser_enabled = False
 
             outline_width, ok1 = QInputDialog.getInt(self, "Outline width", "Enter line thickness (1-100)", 5, 1, 100)
             if not ok1: return
@@ -730,6 +803,7 @@ class Img_Canvas(QWidget):
             self.panning = False
             self.text_enabled = False
             self.picker_enabled = False
+            self.eraser_enabled = False
 
             outline_width, ok1 = QInputDialog.getInt(self, "Outline width", "Enter line thickness (1-100)", 5, 1, 100)
             if not ok1: return
@@ -769,6 +843,7 @@ class Img_Canvas(QWidget):
             self.triangle_enabled = False
             self.panning = False
             self.picker_enabled = False
+            self.eraser_enabled = False
 
             pointsize, ok1 = QInputDialog.getInt(self, "Text size", "Enter size (1-100)", 5, 1, 100)
             if not ok1: return
@@ -802,67 +877,9 @@ class Img_Canvas(QWidget):
         self.triangle_enabled = False
         self.text_enabled = False
         self.picker_enabled = False
-
-        self.setCursor(Qt.CursorShape.ArrowCursor)
-
-    def color_picker(self):
-        self.brush_enabled = False
-        self.spray_enabled = False
-        self.rect_enabled = False
-        self.ellipse_enabled = False
-        self.triangle_enabled = False
-        self.text_enabled = False
-        self.panning = False
         self.eraser_enabled = False
 
-        # Get QPixmap
-        pix = self.image
-
-        # Check if image is opened
-        if self.image is None or self.image.isNull():
-            QMessageBox.information(None, "No Image", "Image must be loaded first")
-            return
-
-        # Convert QPixmap to BGR
-        cv = self.imf.qpixmap_to_cv2(pix)
-
-        # Swap color to BGR if alpha channel is present
-        if cv is not None and cv.ndim == 3 and cv.shape[2] == 4:
-            cv = cv2.cvtColor(cv, cv2.COLOR_BGRA2RGBA)
-
-        # Do not convert for display/color picker
-        cv_image = cv
-
-        window_name = "Color Picker"
-
-        clicked_pos = {"x": None, "y": None}
-
-        # Define callback before assigning
-        def mouse_callback(event, x, y, flags, param):
-            if event == cv2.EVENT_LBUTTONDOWN:
-                clicked_pos["x"], clicked_pos["y"] = x, y
-
-        # Show image and set callback
-        cv2.imshow(window_name, cv_image)
-        cv2.waitKey(1)
-        cv2.setMouseCallback("Color Picker", mouse_callback)
-
-        # Wait for user click
-        while True:
-            cv2.waitKey(20)
-            if clicked_pos["x"] is not None:
-                break
-
-        # Extract BGR color at the clicked pixel
-        b, g, r = cv_image[clicked_pos["y"], clicked_pos["x"]]
-        self.pen_color = QColor(int(r), int(g), int(b))
-
-        self.colorPicked.emit(self.pen_color)
-
-        cv2.setMouseCallback(window_name, lambda  *args: None)
-        cv2.destroyWindow(window_name)
-
-        self.panning = True
+        self.setCursor(Qt.CursorShape.ArrowCursor)
 
 
     def start_selection(self, mode: str):
@@ -944,10 +961,19 @@ class Img_Canvas(QWidget):
                 # Case A: already frozen and an operation is armed -> apply it
                 if self.sel_frozen and self.pending_op:
                     op, params = self.pending_op  # params is a dict (kwargs)
-                    bgr = imf.qpixmap_to_cv2(self.image)
+
+                    pix = self.pixmap()
+                    if pix is None:
+                        self.pending_op = None
+                        return
+
+
+                    bgr = imf.qpixmap_to_cv2(pix)
                     if bgr is None:
                         self.pending_op = None
                         return
+
+
 
                     if op == "crop":
                         # requires SelectionManager.crop(bgr, strict=False/True)
@@ -964,7 +990,13 @@ class Img_Canvas(QWidget):
                     if self.sel_mgr.freeze():
                         self.sel_frozen = True
 
-                        bgr = imf.qpixmap_to_cv2(self.image)
+                        pix = self.pixmap()
+                        if pix is None:
+                            self.cancel_selection()
+                            return
+
+
+                        bgr = imf.qpixmap_to_cv2(pix)
                         if bgr is None:
                             self.cancel_selection()
                             return
@@ -1000,9 +1032,10 @@ class Img_Canvas(QWidget):
         return (x1, y1, x2, y2)
 
     def get_cv2_image(self):
-        if not self.image or self.image.isNull():
+        pix = self.pixmap()
+        if pix is None or pix.isNull():
             return None
-        return imf.qpixmap_to_cv2(self.image)
+        return imf.qpixmap_to_cv2(pix)
 
 
     def set_cv2_image(self, bgr):

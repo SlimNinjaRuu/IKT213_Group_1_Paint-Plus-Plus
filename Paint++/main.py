@@ -373,6 +373,9 @@ class MainWindow(QMainWindow):
         # paint.setCheckable(True)
         paint.triggered.connect(self.canvas.toggle_brush_mode)
 
+        eraser = QAction(QIcon("icons/icons8-paint.svg"), "Eraser", self)
+        eraser.triggered.connect(self.canvas.toggle_eraser_mode)
+
         spray = QAction(QIcon("icons/icons8-spray.svg"), "Spray", self)
         # spray.setCheckable(True)
         spray.triggered.connect(self.canvas.toggle_spray_mode)
@@ -380,13 +383,11 @@ class MainWindow(QMainWindow):
         text = QAction(QIcon("icons/icons8-text.svg"), "Text", self)
         text.triggered.connect(self.canvas.toggle_text_mode)
 
-        color_pick = QAction("Color Picker", self)
-        color_pick.triggered.connect(self.canvas.color_picker)
 
         paint_menu.addAction(paint)
         paint_menu.addAction(spray)
+        paint_menu.addAction(eraser)
         paint_menu.addAction(text)
-        paint_menu.addAction(color_pick)
 
 
     def filters_menu(self):
@@ -454,7 +455,7 @@ class MainWindow(QMainWindow):
     def current_qimage(self):
         if self.canvas.image is None:
             return None
-        return self.canvas.image.toImage()
+        return self.canvas.image
 
     ##### Actually saves the file #####
     def write_image(self, path: str, fmt: bytes | None):

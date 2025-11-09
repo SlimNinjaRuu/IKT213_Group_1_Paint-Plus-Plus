@@ -14,9 +14,40 @@ class Filters:
 
     def warning(self, pix):
         if not pix or pix.isNull():
-            QMessageBox.warning(self, "Warning", "No image")
+            QMessageBox.warning(self.canvas, "Warning", "No image")
             return True
         return False
+
+    def normalize_to_bgr_uint8(self, src_bgr, out):
+
+        if out is None:
+            return None
+
+        if out.ndim == 2:
+            out = cv2.cvtColor(out, cv2.COLOR_GRAY2BGR)
+
+        elif out.ndim == 3:
+
+            if out.shape[2] == 1:
+                out = cv2.cvtColor(out.squeeze(-1), cv2.COLOR_GRAY2BGR)
+            elif out.shape[2] == 4:
+                out = cv2.cvtColor(out, cv2.COLOR_BGRA2BGR)
+            elif out.shape[2] != 3:
+                out = out[..., :3]
+
+        if out.dtype != np.uint8:
+            out = np.clip(out, 0, 255).astype(np.uint8, copy=False)
+
+        h, w = src_bgr.shape[:2]
+
+        if out.shape[:2] != (h, w):
+            out = cv2.resize(out, (w,h), interpolation=cv2.INTER_LINEAR)
+
+        if out.ndim == 3 and out.shape[2] == 3:
+            out = cv2.cvtColor(out, cv2.COLOR_BGR2BGRA)
+
+        return np.ascontiguousarray(out)
+
 
     # ----- Gaussian blur ----- #
     def gaussian_blur(self):
@@ -48,7 +79,8 @@ class Filters:
 
         # Apply filter with selection support
         def blur_operation(bgr):
-            return cv2.GaussianBlur(bgr, (kernel_size, kernel_size), 0)
+            out = cv2.GaussianBlur(bgr, (kernel_size, kernel_size), 0)
+            return self.normalize_to_bgr_uint8(bgr, out)
 
         result_pixmap = self.imf.apply_operation_with_selection(blur_operation)
 
@@ -102,7 +134,7 @@ class Filters:
 
             # Convert back to BGR for display
             sobel_bgr = cv2.cvtColor(sobel, cv2.COLOR_GRAY2BGR)
-            return sobel_bgr
+            return self.normalize_to_bgr_uint8(bgr, sobel_bgr)
 
         result_pixmap = self.imf.apply_operation_with_selection(sobel_operation)
         if result_pixmap:
@@ -139,7 +171,7 @@ class Filters:
 
             # convert back to BGR
             binary_bgr = cv2.cvtColor(binary, cv2.COLOR_GRAY2BGR)
-            return binary_bgr
+            return self.normalize_to_bgr_uint8(bgr, binary_bgr)
 
         result_pixmap = self.imf.apply_operation_with_selection(treshold_operation)
         if result_pixmap:
@@ -187,7 +219,7 @@ class Filters:
 
             # convert back to BGR
             adaptive_bgr = cv2.cvtColor(adaptive, cv2.COLOR_GRAY2BGR)
-            return adaptive_bgr
+            return self.normalize_to_bgr_uint8(bgr, adaptive_bgr)
 
         result_pixmap = self.imf.apply_operation_with_selection(adaptive_threshold_operation)
         if result_pixmap:
@@ -215,7 +247,7 @@ class Filters:
             ycrcb_eq = cv2.merge([y_eq, cr, cb])
 
             bgr_eq = cv2.cvtColor(ycrcb_eq, cv2.COLOR_YCrCb2BGR)
-            return bgr_eq
+            return self.normalize_to_bgr_uint8(bgr, bgr_eq)
 
         result_pixmap = self.imf.apply_operation_with_selection(histogram_operation)
         if result_pixmap:
@@ -244,7 +276,8 @@ class Filters:
             kernel_size = kernel_size + 1
 
         def median_operation(bgr):
-            return cv2.medianBlur(bgr, kernel_size)
+            out = cv2.medianBlur(bgr, kernel_size)
+            return self.normalize_to_bgr_uint8(bgr, out)
 
         result_pixmap = self.imf.apply_operation_with_selection(median_operation)
         if result_pixmap:
@@ -269,7 +302,9 @@ class Filters:
             return
 
         def bilateral_operation(bgr):
-            return cv2.bilateralFilter(bgr, diameter, 75, 75)
+            src = cv2.cvtColor(bgr, cv2.COLOR_BGRA2BGR) if (bgr.ndim == 3 and bgr.shape[2] == 4) else bgr
+            out = cv2.bilateralFilter(src, diameter, 75, 75)
+            return self.normalize_to_bgr_uint8(bgr, out)
 
         result_pixmap = self.imf.apply_operation_with_selection(bilateral_operation)
         if result_pixmap:
@@ -313,7 +348,7 @@ class Filters:
 
             edges = cv2.Canny(gray, threshold1, threshold2)
             edges_bgr = cv2.cvtColor(edges, cv2.COLOR_GRAY2BGR)
-            return edges_bgr
+            return self.normalize_to_bgr_uint8(bgr, edges_bgr)
 
         result_pixmap = self.imf.apply_operation_with_selection(canny_operation)
         if result_pixmap:
@@ -328,7 +363,7 @@ class Filters:
             gray = cv2.cvtColor(bgr, cv2.COLOR_BGR2GRAY)
 
             gray_bgr = cv2.cvtColor(gray, cv2.COLOR_GRAY2BGR)
-            return gray_bgr
+            return self.normalize_to_bgr_uint8(bgr, gray_bgr)
 
         result_pixmap = self.imf.apply_operation_with_selection(grayscale_operation)
         if result_pixmap:

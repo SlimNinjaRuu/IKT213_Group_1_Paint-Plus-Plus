@@ -26,7 +26,7 @@ class MainWindow(QMainWindow):
         self.tools_menu()
 
     def button_clicked(self):
-        bgr = cv2.imread("100.jpg")
+        bgr = cv2.imread("../100.jpg")
         if bgr is None:
             QMessageBox.critical(self, "Error", "Could not load 100.jpg")
             return

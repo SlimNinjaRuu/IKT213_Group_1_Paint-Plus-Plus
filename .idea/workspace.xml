@@ -5,17 +5,9 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="3d484651-8040-42ef-b6b3-7b2286c5c8bf" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/Paint++/.idea/img_canvas.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Paint++/clipboard_functions.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Paint++/icons/icons8-draw.svg" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Paint++/icons/icons8-zoom.svg" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Paint++/img_canvas.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Paint++/test.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Paint++/tools_menu_functions.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Paint++/Filters.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Paint++/image_menu.py" beforeDir="false" afterPath="$PROJECT_DIR$/Paint++/image_menu_functions.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Paint++/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/Paint++/main.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Paint++/selection tools.py" beforeDir="false" afterPath="$PROJECT_DIR$/Paint++/selection_tools_functions.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -30,8 +22,25 @@
     </option>
   </component>
   <component name="Git.Settings">
+    <option name="RECENT_BRANCH_BY_REPOSITORY">
+      <map>
+        <entry key="$PROJECT_DIR$" value="main" />
+      </map>
+    </option>
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
   </component>
+  <component name="GitHubPullRequestSearchHistory">{
+  &quot;lastFilter&quot;: {
+    &quot;state&quot;: &quot;OPEN&quot;,
+    &quot;assignee&quot;: &quot;SindreWinaes&quot;
+  }
+}</component>
+  <component name="GithubPullRequestsUISettings">{
+  &quot;selectedUrlAndAccountId&quot;: {
+    &quot;url&quot;: &quot;git@github.com:SlimNinjaRuu/IKT213_Group_1_Paint-Plus-Plus.git&quot;,
+    &quot;accountId&quot;: &quot;0b96db04-01ff-4ece-b710-f88966f18124&quot;
+  }
+}</component>
   <component name="ProjectColorInfo">{
   &quot;customColor&quot;: &quot;&quot;,
   &quot;associatedIndex&quot;: 5
@@ -41,38 +50,40 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent"><![CDATA[{
-  "keyToString": {
-    "Python.clipboard_functions.executor": "Run",
-    "Python.image_menu.executor": "Run",
-    "Python.img_canvas.executor": "Run",
-    "Python.main.executor": "Run",
-    "Python.selection tools.executor": "Run",
-    "Python.selection_tools_functions.executor": "Run",
-    "Python.test.executor": "Run",
-    "Python.tools_menu_functions.executor": "Run",
-    "RunOnceActivity.ShowReadmeOnStart": "true",
-    "RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252": "true",
-    "RunOnceActivity.git.unshallow": "true",
-    "git-widget-placeholder": "new-petter-branch-2",
-    "last_opened_file_path": "C:/Users/pette/IKT213_Group_1_Paint-Plus-Plus/Paint++",
-    "settings.editor.selected.configurable": "com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable"
+  <component name="PropertiesComponent">{
+  &quot;keyToString&quot;: {
+    &quot;ModuleVcsDetector.initialDetectionPerformed&quot;: &quot;true&quot;,
+    &quot;Python._pydev_execfile.executor&quot;: &quot;Run&quot;,
+    &quot;Python.clipboard_functions.executor&quot;: &quot;Run&quot;,
+    &quot;Python.image_menu.executor&quot;: &quot;Run&quot;,
+    &quot;Python.img_canvas.executor&quot;: &quot;Run&quot;,
+    &quot;Python.main.executor&quot;: &quot;Run&quot;,
+    &quot;Python.selection tools.executor&quot;: &quot;Run&quot;,
+    &quot;Python.selection_tools_functions.executor&quot;: &quot;Run&quot;,
+    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
+    &quot;git-widget-placeholder&quot;: &quot;integrate/petter-brush+selection&quot;,
+    &quot;junie.onboarding.icon.badge.shown&quot;: &quot;true&quot;,
+    &quot;last_opened_file_path&quot;: &quot;C:/Users/pette/IKT213_Group_1_Paint-Plus-Plus/Paint++&quot;,
+    &quot;settings.editor.selected.configurable&quot;: &quot;com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable&quot;,
+    &quot;to.speed.mode.migration.done&quot;: &quot;true&quot;
   }
-}]]></component>
+}</component>
   <component name="RecentsManager">
     <key name="CopyFile.RECENT_KEYS">
       <recent name="C:\Users\pette\IKT213_Group_1_Paint-Plus-Plus\Paint++" />
-      <recent name="C:\Users\pette\IKT213_Group_1_Paint-Plus-Plus\Paint++\.idea" />
       <recent name="C:\Users\pette\IKT213_Group_1_Paint-Plus-Plus\Paint++\icons" />
     </key>
     <key name="MoveFile.RECENT_KEYS">
+      <recent name="$PROJECT_DIR$/Paint++/Test files" />
       <recent name="C:\Users\pette\IKT213_Group_1_Paint-Plus-Plus\Paint++" />
     </key>
   </component>
   <component name="SharedIndexes">
     <attachedChunks>
       <set>
-        <option value="bundled-python-sdk-7e47963ff851-f0eec537fc84-com.jetbrains.pycharm.pro.sharedIndexes.bundled-PY-252.23892.515" />
+        <option value="bundled-python-sdk-ce6832f46686-7b97d883f26b-com.jetbrains.pycharm.pro.sharedIndexes.bundled-PY-252.25557.178" />
       </set>
     </attachedChunks>
   </component>
@@ -96,5 +107,15 @@
         </entry>
       </map>
     </option>
+  </component>
+  <component name="XDebuggerManager">
+    <breakpoint-manager>
+      <breakpoints>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/Paint++/Test files/image_menu.py</url>
+          <option name="timeStamp" value="3" />
+        </line-breakpoint>
+      </breakpoints>
+    </breakpoint-manager>
   </component>
 </project>

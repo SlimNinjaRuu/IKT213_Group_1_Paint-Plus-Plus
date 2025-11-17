@@ -2,7 +2,6 @@ import cv2
 import numpy as np
 import math
 
-##################################### POLYGON #####################################
 
 def _polygon_mouse(event, x, y, flags, state):
     disp   = state["disp"]
@@ -26,8 +25,11 @@ def polygon_points(image, window_name="Polygon select"):
     points = []
     disp = image.copy()
 
+    # Create window and show image copy for drawing
     cv2.namedWindow(window_name, cv2.WINDOW_AUTOSIZE)
     cv2.imshow(window_name, disp)
+
+    # shared state for mouse callback
     state = {"disp": disp, "points": points, "win": window_name}
     cv2.setMouseCallback(window_name, _polygon_mouse, state)
 
@@ -42,26 +44,32 @@ def polygon_points(image, window_name="Polygon select"):
             cv2.imshow(window_name, disp)
             closed_drawn = True
 
+        # Enter: accept current points
         if key in (13, 10):   # Enter/Return
             # If not closed yet but valid, close it in the returned pts implicitly
             break
 
-        if key == 27:         # Esc
+        # Escape: cancel selection
+        if key == 27:
             points.clear()
             break
 
     cv2.destroyWindow(window_name)
     return np.array(points, dtype=np.int32)
 
+# Helper: apply polygon extraction with given mode
 def polygon_selection(image_bgr, pts, mode="alpha_cropped"):
     return extract_polygon(image_bgr, np.asarray(pts, dtype=np.int32), mode=mode)
 
+
+
 def extract_polygon(image, pts, mode="alpha_cropped"):
 
+    # Fallback: not enough points to original
     if pts is None or len(pts) < 3:
         return image.copy()
 
-    # Make mask
+    # Make binary mask from polygon
     mask = np.zeros(image.shape[:2], dtype=np.uint8)
     cv2.fillPoly(mask, [pts], 255)
 
@@ -80,26 +88,30 @@ def extract_polygon(image, pts, mode="alpha_cropped"):
     out_cropped = out_bgra[y:y+h, x:x+w]
     return out_cropped
 
-##################################### POLYGON #####################################
-
-##################################### LASSO #####################################
-
+#Apply a grayscale effect only inside the binary mask.
 def apply_gray_inside_mask(image, mask):
-    """Apply a grayscale effect only inside the binary mask."""
+
+    # Convert full image to grayscale
     img_gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
     img_gray_bgr = cv2.cvtColor(img_gray, cv2.COLOR_GRAY2BGR)
+
+    # Copy original and replace the masked pixels with grayscale version
     out = image.copy()
     out[mask > 0] = img_gray_bgr[mask > 0]
     return out
 
+
+#Make a polygon mask from pts and apply the demo effect.
 def finalize_with_mask(image, pts):
-    """Make a polygon mask from pts and apply the demo effect."""
+
     if pts.shape[0] < 3:
         return image.copy()
 
+    # Build mask from polygon points
     mask = np.zeros(image.shape[:2], dtype=np.uint8)
     cv2.fillPoly(mask, [pts], 255)
 
+    # Apply grayscale only inside mask
     return apply_gray_inside_mask(image, mask)
 
 def _lasso_mouse(event, x, y, flags, state):
@@ -110,6 +122,7 @@ def _lasso_mouse(event, x, y, flags, state):
     min_dist = state["min_dist"]
 
     if event == cv2.EVENT_LBUTTONDOWN:
+        # Start drawing freehand path
         state["drawing"] = True
         state["last_pt"] = (x, y)
         points.append((x, y))
@@ -118,9 +131,13 @@ def _lasso_mouse(event, x, y, flags, state):
         cv2.imshow(state["win"], disp)
 
     elif event == cv2.EVENT_MOUSEMOVE and drawing and (flags & cv2.EVENT_FLAG_LBUTTON):
+
+        # Mouse moving while LMB is held and drawing is active
         if last_pt is None:
             state["last_pt"] = (x, y)
             return
+
+        # Only add a point if we moved at least min_dist pixels
         if math.hypot(x - last_pt[0], y - last_pt[1]) >= min_dist:
             points.append((x, y))
             # Drawing line - thickness and color
@@ -129,6 +146,7 @@ def _lasso_mouse(event, x, y, flags, state):
             cv2.imshow(state["win"], disp)
 
     elif event == cv2.EVENT_LBUTTONUP:
+        # Stop drawing on mouse release
         state["drawing"] = False
         state["last_pt"] = None
 
@@ -140,6 +158,7 @@ def lasso_points(image, min_dist=2, window_name="Lasso select"):
     points = []
     disp = image.copy()
 
+    # Shared state for mouse callback
     state = {
         "disp": disp,
         "points": points,
@@ -153,6 +172,7 @@ def lasso_points(image, min_dist=2, window_name="Lasso select"):
     cv2.imshow(window_name, disp)
     cv2.setMouseCallback(window_name, _lasso_mouse, state)
 
+    # Wait for Enter or Esc
     while True:
         key = cv2.waitKey(20) & 0xFF
         if key in (13, 10):   # Enter/Return
@@ -196,7 +216,7 @@ def rectangular_selection(image_bgr, p1, p2):
 
 
 
-# Demo
+# Demo - not used in the final progrm
 def main():
     img = cv2.imread('100.jpg', 1)
 

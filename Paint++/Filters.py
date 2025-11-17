@@ -9,9 +9,12 @@ class Filters:
 
     def __init__(self, canvas, image_functions):
 
+        # Reference ro canvas and image helper functions
         self.canvas = canvas
         self.imf = image_functions
 
+
+    # Show warning if no image
     def warning(self, pix):
         if not pix or pix.isNull():
             QMessageBox.warning(self.canvas, "Warning", "No image")
@@ -20,12 +23,15 @@ class Filters:
 
     def normalize_to_bgr_uint8(self, src_bgr, out):
 
+        # Handle empty output
         if out is None:
             return None
 
+        # Convert grayscale  to BGR
         if out.ndim == 2:
             out = cv2.cvtColor(out, cv2.COLOR_GRAY2BGR)
 
+        # Handle different channel layouts
         elif out.ndim == 3:
 
             if out.shape[2] == 1:
@@ -35,17 +41,20 @@ class Filters:
             elif out.shape[2] != 3:
                 out = out[..., :3]
 
+        # Ensure uint8 range [0, 255]
         if out.dtype != np.uint8:
             out = np.clip(out, 0, 255).astype(np.uint8, copy=False)
 
+        # Match original size
         h, w = src_bgr.shape[:2]
-
         if out.shape[:2] != (h, w):
             out = cv2.resize(out, (w,h), interpolation=cv2.INTER_LINEAR)
 
+        # Convert back to BGRA for canvas (with alpha)
         if out.ndim == 3 and out.shape[2] == 3:
             out = cv2.cvtColor(out, cv2.COLOR_BGR2BGRA)
 
+        # Ensure contiguous memory
         return np.ascontiguousarray(out)
 
 
@@ -77,7 +86,7 @@ class Filters:
             kernel_size = kernel_size + 1
 
 
-        # Apply filter with selection support
+        # Apply filter  to full image or selection
         def blur_operation(bgr):
             out = cv2.GaussianBlur(bgr, (kernel_size, kernel_size), 0)
             return self.normalize_to_bgr_uint8(bgr, out)
@@ -113,12 +122,14 @@ class Filters:
 
         def sobel_operation(bgr):
 
-
+            # Convert to grayscale
             gray = cv2.cvtColor(bgr, cv2.COLOR_BGR2GRAY)            #Convert to grayscale for edge detection
 
+            # Detect vertical edges
             if direction == "X-direction":
                 sobel = cv2.Sobel(gray, cv2.CV_64F, 1,0,  ksize=3)     # Detect vertical edges
 
+            # Detect horizontal edges
             elif direction == "Y-direction":
                 sobel = cv2.Sobel(gray, cv2.CV_64F, 0,1, ksize=3)   #Detect horizontal edges
 
@@ -166,7 +177,7 @@ class Filters:
             # Convert to grayscale
             gray = cv2.cvtColor(bgr, cv2.COLOR_BGR2GRAY)
 
-            #apply binary threshold
+            # apply binary threshold
             _, binary = cv2.threshold(gray, threshold_val, 255, cv2.THRESH_BINARY)
 
             # convert back to BGR
@@ -186,6 +197,7 @@ class Filters:
         if self.warning(pix):
             return
 
+        # Ask user for local block size
         block_size, ok = QInputDialog.getInt(
             None,
             "Adaptive Threshold",
@@ -208,6 +220,7 @@ class Filters:
             # Convert to grayscale
             gray = cv2.cvtColor(bgr, cv2.COLOR_BGR2GRAY)
 
+            # Local adaptive thresholding
             adaptive = cv2.adaptiveThreshold(
                 gray,
                 255,
@@ -224,6 +237,7 @@ class Filters:
         result_pixmap = self.imf.apply_operation_with_selection(adaptive_threshold_operation)
         if result_pixmap:
             self.canvas.set_image(result_pixmap)
+
 
     def histogram_operation(self):
 
@@ -253,11 +267,13 @@ class Filters:
         if result_pixmap:
             self.canvas.set_image(result_pixmap)
 
+
     def median_blur(self):
         pix = self.canvas.pixmap()
         if self.warning(pix):
             return
 
+        # Ask user for kernel size
         kernel_size, ok = QInputDialog.getInt(
             None,
             "Median Blur",
@@ -289,6 +305,7 @@ class Filters:
         if self.warning(pix):
             return
 
+        # Ask user for filter diameter
         diameter, ok = QInputDialog.getInt(
             None,
             "Bilateral Filter",
@@ -302,6 +319,8 @@ class Filters:
             return
 
         def bilateral_operation(bgr):
+
+            # Drop alpha for bilateral if present
             src = cv2.cvtColor(bgr, cv2.COLOR_BGRA2BGR) if (bgr.ndim == 3 and bgr.shape[2] == 4) else bgr
             out = cv2.bilateralFilter(src, diameter, 75, 75)
             return self.normalize_to_bgr_uint8(bgr, out)
@@ -317,7 +336,7 @@ class Filters:
         if self.warning(pix):
             return
 
-
+        # Ask user for the first threshold
         threshold1, ok1 = QInputDialog.getInt(
             None,
             "Canny Edge Detection",
@@ -330,6 +349,7 @@ class Filters:
         if not ok1:
             return
 
+        # Ask user for the second threshold
         threshold2, ok2 = QInputDialog.getInt(
             None,
             "Canny Edge Detection",
@@ -346,7 +366,10 @@ class Filters:
             #convert to grayscale
             gray = cv2.cvtColor(bgr, cv2.COLOR_BGR2GRAY)
 
+            # Run Canny edge detector
             edges = cv2.Canny(gray, threshold1, threshold2)
+
+            # Convert back to BGR for display
             edges_bgr = cv2.cvtColor(edges, cv2.COLOR_GRAY2BGR)
             return self.normalize_to_bgr_uint8(bgr, edges_bgr)
 
@@ -360,8 +383,10 @@ class Filters:
             return
 
         def grayscale_operation(bgr):
+            # Convert to grayscale
             gray = cv2.cvtColor(bgr, cv2.COLOR_BGR2GRAY)
 
+            # Convert back to BGR (3-channel)
             gray_bgr = cv2.cvtColor(gray, cv2.COLOR_GRAY2BGR)
             return self.normalize_to_bgr_uint8(bgr, gray_bgr)
 

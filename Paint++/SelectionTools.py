@@ -62,6 +62,8 @@ class SelectionTools:
     def lasso_mask(hw, pts):
         return SelectionTools.polygon_mask(hw, pts)
 
+
+    # Find bounding box of non-zero pixels in mask
     @staticmethod
     def bbox_from_mask(mask: np.ndarray):
 
@@ -72,6 +74,8 @@ class SelectionTools:
         x, y, w, h = cv2.boundingRect(nz)
         return (x, y, w, h)
 
+
+    # Get bounding box from mask
     @staticmethod
     def crop_to_selection(bgr: np.ndarray, mask: np.ndarray, strict: bool = False):
 
@@ -83,17 +87,21 @@ class SelectionTools:
 
         H, W = bgr.shape[:2]
 
+        # Clamp bbox to image bounds
         x0 = max(0, min(x, W))
         y0 = max(0, min(y, H))
         x1 = max(0, min(x + w, W))
         y1 = max(0, min(y + h, H))
 
+        # Invalid region cancels crop
         if x1 <= x0 or y1 <= y0:
             return None
 
+        # Crop color image to bbox
         crop = bgr[y0:y1, x0:x1].copy()
 
         if strict:
+            # Use mask inside bbox to zero out outside pixels
             submask = mask[y0:y1, x0:x1]
             if submask.dtype != np.uint8:
                 submask = submask.astype(np.uint8)
@@ -101,10 +109,13 @@ class SelectionTools:
         return crop
 
 
+    # Apply op_func to whole image
     @staticmethod
     def apply_in_mask(bgr: np.ndarray, op_func,  mask: np.ndarray):
 
         modified = op_func(bgr.copy())
+
+        # Copy original and blend back only inside mask
         out = bgr.copy()
         out[mask > 0] = modified[mask > 0]
         return out

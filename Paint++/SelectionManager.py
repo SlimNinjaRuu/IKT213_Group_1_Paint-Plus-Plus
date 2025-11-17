@@ -162,25 +162,32 @@ class SelectionManager:
 
     # ---------- Mask ---------- #
 
-    # returns a uint8 mask
+    # return current selection as a uint8 mask
     def mask(self, hw):
         state = self.state
 
+        # Rectangular selection
         if state.mode == "rect" and state.rect_anchor and state.rect_current:
             return SelectionTools.rect_mask(hw, state.rect_anchor, state.rect_current)
 
+        # Polygon selection
         if state.mode == "poly" and len(state.points) >= 3:
             return SelectionTools.polygon_mask(hw, state.points)
 
+        # Lasso (freehand) selection
         if state.mode == "lasso" and len(state.points) >= 3:
             return SelectionTools.lasso_mask(hw, state.points)
 
+        # No valid selection -> empty mask
         return np.zeros(hw, dtype=np.uint8)
 
 
+    # True if there is a frozen selection ready to use
     def has_frozen_selcetion(self) -> bool:
         return self.state.frozen and self.is_ready()
 
+
+    # Return bounding box of current selection (x1, y1, x2, y2)
     def bbox(self, hw):
 
         mask = self.mask(hw)
@@ -188,8 +195,11 @@ class SelectionManager:
             return None
         return SelectionTools.bbox_from_mask(mask)
 
+
+    # Crop image to current selection
     def crop(self, bgr: np.ndarray, strict: bool = False):
 
+        # Selection mus be frozen
         if not self.has_frozen_selcetion():
             return None
 
@@ -199,11 +209,14 @@ class SelectionManager:
         if mask is None or mask.size == 0:
             return None
 
+        # Delegate actual crop to SelectionTools
         return SelectionTools.crop_to_selection(bgr, mask, strict)
 
 
+    # Apply an operation only inside current selection
     def apply_in_selection(self, bgr: np.ndarray, op_func):
 
+        # Selection must be frozen
         if not self.has_frozen_selcetion():
             return None
 
@@ -213,6 +226,7 @@ class SelectionManager:
         if mask is None:
             return None
 
+        # Let SelectionTools apply op_func where mask > 0
         return SelectionTools.apply_in_mask(bgr, op_func, mask)
 
 

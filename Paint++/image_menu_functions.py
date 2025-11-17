@@ -17,8 +17,6 @@ class imf:
         if bgr is None:
             return QPixmap()
 
-        ## bgr = bgr.copy()
-
         # takes the cv2 bgr image and makes it rgb image
         rgba = cv2.cvtColor(bgr, cv2.COLOR_BGRA2RGBA)
 
@@ -140,17 +138,17 @@ class imf:
         self.canvas.set_image(qpix)
 
     def selective_crop(self):
-        # Gets the QPixmap
+        # Get current pixmap from canvas
         pix = self.canvas.pixmap()
 
-        # Does not crop if QPixmap is empty, returns
+        # Abort if no image
         if not pix or pix.isNull():
             return
 
-        # Makes a bgr
+        # Convert QPixmap to OpenCV BGR image
         cv = self.qpixmap_to_cv2(pix)
 
-        # User selects ROI
+        # Let user select the region of interest
         r = cv2.selectROI("Crop select", cv)
 
         # Crops the image over the selected ROI
@@ -163,19 +161,22 @@ class imf:
         # Sets the cropped QPixmap as canvas
         self.canvas.set_image(qpix)
 
+
     def resize(self):
 
+        # Get current pixmap
         pix = self.canvas.pixmap()
 
+        # Abort if no canvas image
         if self.canvas.image is None or self.canvas.image.isNull():
             QMessageBox.information(None, "No Image", "Image must be loaded first")
             return
 
-        # Get current image dimensions
+        # Get current image dimensions from the canvas
         current_width = self.canvas.width()
         current_height = self.canvas.height()
 
-        # Ask for new width
+        # Ask user for new width
         width, ok1 = QInputDialog.getInt(
             None,
             "Resize Image", f"Enter Width (current: {current_width}px:",
@@ -187,6 +188,7 @@ class imf:
         if not ok1:  # User Canceld
             return
 
+        # Ask user for new height
         height, ok2 = QInputDialog.getInt(
             None, "Resize Image", f"Enter Height (current: {current_height}px:",
             current_height,
@@ -196,33 +198,46 @@ class imf:
         if not ok2:  # User Cancelde
             return
 
+        # Convert QPixmap to an OpenCV image
         cv_image = self.qpixmap_to_cv2(pix)
+
+        # Resize with OpenCV
         resized_image = cv2.resize(cv_image, (width, height))
+
+        # Convert back to QPixmap and update canvas
         new_pixmap = self.cv2_to_qpixmap(resized_image)
         self.canvas.set_image(new_pixmap)
 
 
+
     def apply_operation_with_selection(self, operation_func):
+        # Get current pixmap
         pix = self.canvas.pixmap()
 
         if not pix or pix.isNull():
             return
 
         c = self.canvas
+
+        # Convert Qpixmap to OpenCV image
         cv_img = self.qpixmap_to_cv2(pix)
 
+        # If frozen selection exists, apply only inside mask
         if hasattr(c, "sel_mgr") and c.sel_mgr.state.frozen and c.sel_mgr.is_ready():
 
                 h, w = cv_img.shape[:2]
                 mask = c.sel_mgr.mask((h, w))
 
+                # Apply operatuon to a copy
                 modified = operation_func(cv_img.copy())
 
+                # Blend modified pixels only where mask > 0
                 result = cv_img.copy()
                 result[mask > 0] = modified[mask > 0]
 
                 return self.cv2_to_qpixmap(result)
 
+        # No selection: apply to whole image
         modified = operation_func(cv_img)
         return self.cv2_to_qpixmap(modified)
 
@@ -230,19 +245,23 @@ class imf:
 
         c = self.canvas
 
+        # Requiers active, frozen selection with mask
         if not (getattr(c, "sel_active", False)
                 and getattr(c, "sel_frozen", False)
                 and getattr(c, "active_mask", None) is not None):
             QMessageBox.information(None, "Crop", "Select an area an press enter to freeze it first. \n Then choose Image -> Crop and press Enter to apply.")
             return
 
+        # Get current image as BGR
         bgr = c.get_cv2_image()
         if bgr is None:
             return
 
+        # Let SelectionManager perform crop
         out = c.sel_mgr.crop(bgr, strict=bool(strict))
         if out is not None:
             self.canvas.set_cv2_image(out)
 
+        # Exit selection mode after crop
         c.cancel_selection()
 

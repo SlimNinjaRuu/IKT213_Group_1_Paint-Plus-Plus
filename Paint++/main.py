@@ -1,13 +1,20 @@
 import os
-from bisect import bisect_left
+import sys
 
-# imports different classes from the PyQt library
-from PyQt6.QtCore import QSizeF, QSize
-from PyQt6 import QtGui
+# imports different classes from the PyQt library'
+from PyQt6.QtCore import QSize
 from PyQt6.QtCore import Qt, QProcess
 from PyQt6.QtCore import *
-from PyQt6.QtGui import QAction, QIcon, QKeySequence, QPixmap, QImageReader, QImage, QImageIOHandler, QImageWriter
-from PyQt6.QtGui import QPainter, QPixmap, QColor, QBrush, QPen, QImageReader
+
+from PyQt6.QtGui import (
+    QAction,
+    QIcon,
+    QKeySequence,
+    QImageWriter,
+    QPixmap,
+    QColor,
+    QImageReader)
+
 from PyQt6.QtWidgets import (
     QApplication,
     QWidget,
@@ -15,40 +22,51 @@ from PyQt6.QtWidgets import (
     QMainWindow,
     QFrame,
     QMenu,
-    QColorDialog,
     QCheckBox,
     QStatusBar,
-    QToolBar, QStyle, QFileDialog, QMessageBox, QScrollArea, QVBoxLayout, QLayout, QVBoxLayout, QHBoxLayout, QPushButton, QLabel, QSpacerItem, QSizePolicy, QTabWidget, QDialog)
+    QStyle,
+    QFileDialog,
+    QMessageBox,
+    QScrollArea,
+    QVBoxLayout,
+    QPushButton,
+    QDialog)
 from img_canvas import Img_Canvas
 from image_menu_functions import imf
 from Filters import Filters
 
-import sys
 
 def main():
 
-    # creates an object from the QApplication class (classname() means to create object)
+    # Create application object
     app = QApplication(sys.argv)
 
     # creates an object from the QWidget class
     window = MainWindow()
     window.show()
+
+    # Build all menus
     window.file_menu()
     window.edit_menu()
     window.image_menu()
     window.tools_menu()
     window.shapes_menu()
     window.filters_menu()
+
+    # Start eventloop
     app.exec()
 
 class MainWindow(QMainWindow):
 
+    # Basic Window setup
     def __init__(self):
         super().__init__()
         self.setWindowTitle("Paint++")
         self.resize(1920, 1080)
         self.panning = True
-        self.canvas = Img_Canvas(imf)                                  # Creates an instance of the canvas class
+
+
+        self.canvas = Img_Canvas(imf)                               # Creates an instance of the canvas class
         self.canvas.colorPicked.connect(self.on_color_picked)
         self.scroll = QScrollArea()                                 # Creates a scroll area
 
@@ -81,6 +99,7 @@ class MainWindow(QMainWindow):
         dock.setWidget(tool_panel)
         self.addDockWidget(Qt.DockWidgetArea.LeftDockWidgetArea, dock)
 
+        # Checkbox for shape fill toggle
         self.cb_shape_fill.stateChanged.connect(self.canvas.set_fill_enabled)
 
         # Color preview box
@@ -88,13 +107,16 @@ class MainWindow(QMainWindow):
         self.color_preview.setFixedSize(60, 60)
         self.color_preview.setStyleSheet("background-color: black; border: 1px solid #333; border-radius: 4px;")
 
+        # Space above color preview
         layout.addSpacing(60)
 
         # PyQt6 (horizontal centering)
         layout.addWidget(self.color_preview, alignment=Qt.AlignmentFlag.AlignHCenter)
 
+        # Push content to the top
         layout.addStretch(1)
 
+    # Update color preview frame background
     def update_color_preview(self, color: QColor):
         self.color_preview.setStyleSheet(
             f"background-color: {color.name()}; border: 1px solid #333; border-radius: 4px;"
@@ -133,7 +155,6 @@ class MainWindow(QMainWindow):
 
 
     #### This method creates the dropdown menu for File #####
-    #### It does not contain the operations of the buttons #####
     def file_menu(self):
 
         menu = self.menuBar()
@@ -179,10 +200,12 @@ class MainWindow(QMainWindow):
 
         layout = QVBoxLayout(dlg)
 
+        # Button to resize the canvas
         btn_canvas = QPushButton("Canvas Size..", dlg)
         btn_canvas.clicked.connect(lambda: self.canvas.resize_canvas())
         layout.addWidget(btn_canvas)
 
+        # Close button
         btn_close = QPushButton("Close", dlg)
         btn_close.clicked.connect(dlg.accept)
         layout.addWidget(btn_close)
@@ -191,21 +214,25 @@ class MainWindow(QMainWindow):
         dlg.resize(QSize(600, 600))
         dlg.exec()
 
+    # Start new process running this same script
     def open_new_instance(self):
         import subprocess, sys, os
         script = os.path.abspath(sys.argv[0])
         QProcess.startDetached(sys.executable, [script])
 
 
+    # Quit the application
     def exit_program(self):
         QApplication.quit()
 
+
+    # Edit menu setup
     def edit_menu(self):
         menu = self.menuBar()
 
         edit_menu = menu.addMenu("&Edit")
 
-        # Adds an undo button
+        # Undo action
         undo_action = QAction(
             self.style().standardIcon(QStyle.StandardPixmap.SP_ArrowBack),
             "Undo",
@@ -221,7 +248,7 @@ class MainWindow(QMainWindow):
         edit_menu.addSection("Clipboard")
 
 
-        # Edit function
+        # Copy action
         copy_action = QAction(
             QIcon.fromTheme(
                 "Edit-Copy",
@@ -233,6 +260,8 @@ class MainWindow(QMainWindow):
         copy_action.setShortcut(QKeySequence.StandardKey.Copy) # copy function
         copy_action.triggered.connect(self.toolbar_button_clicked)
 
+
+        # Paste action
         paste_action = QAction(
             QIcon.fromTheme(
                 "Edit-Paste",
@@ -244,6 +273,7 @@ class MainWindow(QMainWindow):
         paste_action.setShortcut(QKeySequence.StandardKey.Paste) #paste function
         paste_action.triggered.connect(self.toolbar_button_clicked)
 
+        # Cut action
         cut_action = QAction(
             QIcon.fromTheme(
                 "Edit-Cut",
@@ -259,6 +289,8 @@ class MainWindow(QMainWindow):
         canvas_size = QAction(self.style().standardIcon(QStyle.StandardPixmap.SP_FileDialogDetailedView), "Canvas Size", self)
         canvas_size.triggered.connect(self.canvas.resize_canvas)
 
+
+        # Add actions to Edit menu
         edit_menu.addAction(paste_action)
         edit_menu.addAction(cut_action)
         edit_menu.addAction(copy_action)
@@ -276,9 +308,12 @@ class MainWindow(QMainWindow):
         rectangular = QAction(QIcon("icons/icons8-rectangular.svg"), "Rectangular", self)
         rectangular.triggered.connect(lambda : [self.save_state(), self.canvas.start_selection("rect"), self.canvas.setFocus()])
 
+        # Lasso selection
         lasso = QAction(QIcon("icons/icons8-lasso.svg"), "Lasso", self)
         lasso.triggered.connect(lambda : self.canvas.start_selection("lasso"))
 
+
+        # Polygon selection
         polygon = QAction(QIcon("icons/icons8-polygon.svg"), "Polygon", self)
         polygon.triggered.connect(lambda : self.canvas.start_selection("poly"))
 
@@ -287,7 +322,7 @@ class MainWindow(QMainWindow):
         select_menu.addAction(lasso)
         select_menu.addAction(polygon)
 
-        # Makes Cropping and resizing
+        # Crop actions
         crop = QAction(QIcon("icons/icons8-crop.svg"), "Crop", self)
         crop.triggered.connect(lambda: [self.save_state(), self.imf.request_crop(strict=False)])
         image_menu.addAction(crop)
@@ -296,6 +331,7 @@ class MainWindow(QMainWindow):
         strict_crop.triggered.connect(lambda: [self.save_state(), self.imf.request_crop(strict=True)])
         image_menu.addAction(strict_crop)
 
+        # Resize ation
         resize = QAction(QIcon("icons/icons8-resize.svg"), "Resize", self)
         resize.triggered.connect(lambda :[self.save_state(), self.imf.resize()])
 
@@ -323,6 +359,9 @@ class MainWindow(QMainWindow):
         orientation_menu.addAction(flip_horizontal)
         orientation_menu.addAction(flip_vertical)
 
+
+
+    # Shapes menu setup
     def shapes_menu(self):
         menu = self.menuBar()
         shape_menu = menu.addMenu("&Shapes")
@@ -341,13 +380,16 @@ class MainWindow(QMainWindow):
         shape_menu.addAction(triangle)
 
 
+    # Tools menu setup
     def tools_menu(self):
         menu = self.menuBar()
         tools_menu = menu.addMenu("&Tools")
 
+        # Panning/move tool
         panning = QAction("Move", self)
         panning.triggered.connect(self.canvas.toggle_panning_mode)
 
+        # Zoom actions
         zoom_in = QAction(QIcon("icons/icons8-zoom.svg"), "Zoom In", self)
         zoom_in.setShortcut("Ctrl++")
         zoom_in.triggered.connect(self.canvas.zoom_in)
@@ -365,7 +407,7 @@ class MainWindow(QMainWindow):
         tools_menu.addAction(zoom_out)
         tools_menu.addAction(reset_zoom)
 
-        # Adding paint Submenu
+        # Paint Submenu
         paint_menu = QMenu("&Paint", self)
         tools_menu.addMenu(paint_menu)
 
@@ -390,10 +432,12 @@ class MainWindow(QMainWindow):
         paint_menu.addAction(text)
 
 
+    # Filters menu setup
     def filters_menu(self):
         menu = self.menuBar()
         filters_menu = menu.addMenu("&Filters")
 
+        # Blur submenu
         blur_menu = filters_menu.addMenu("Blur")
 
         gaussian = QAction( "Gaussian", self)
@@ -409,6 +453,7 @@ class MainWindow(QMainWindow):
         blur_menu.addAction(median)
         blur_menu.addAction(bilateral)
 
+        # Edge detection submenu
         edge_menu = filters_menu.addMenu("Edge Detection")
 
         sobel = QAction( "Sobel", self)
@@ -420,6 +465,8 @@ class MainWindow(QMainWindow):
         edge_menu.addAction(sobel)
         edge_menu.addAction(canny)
 
+
+        # Threshold submenu
         threshold_menu = filters_menu.addMenu("Thresholding")
 
         binary = QAction( "Binary", self)
@@ -433,9 +480,11 @@ class MainWindow(QMainWindow):
 
         filters_menu.addSeparator()
 
+        # Histogram equalization
         histogram = QAction( "Histogram Equalization", self)
         histogram.triggered.connect(lambda: [self.save_state(), self.filters.histogram_operation()])
 
+        # Grayscale conversion
         grayscale = QAction( "Grayscale", self)
         grayscale.triggered.connect(lambda: [self.save_state(), self.filters.grayscale()])
 
@@ -443,15 +492,18 @@ class MainWindow(QMainWindow):
         filters_menu.addAction(grayscale)
 
 
-
+    # Show zoom in status bar
     def update_zoom_status(self):
         if self.canvas.image:
             zoom_percent = self.canvas.get_zoom_percent()
             self.status.showMessage(f"Zoom: {zoom_percent}%")
 
+
+    # Placeholder handler for clipboard actions
     def toolbar_button_clicked(self, s):
         print("click", s)
 
+    # Return current image on canvas as QImage
     def current_qimage(self):
         if self.canvas.image is None:
             return None
@@ -461,20 +513,23 @@ class MainWindow(QMainWindow):
     def write_image(self, path: str, fmt: bytes | None):
 
 
-        img = self.current_qimage()             # Get Current image
+        img = self.current_qimage()             # Get Current QImage from canvas
         if img is None:
             QMessageBox.information(self, "Nothing to save", "Load or create an image first.")
             return False
 
+        # Create writer with chosen format
         writer = QImageWriter(path, fmt  if fmt else b"")
         ok = writer.write(img)                  # Write to disk
         if not ok:
             QMessageBox.critical(self, "Save Failed", writer.errorString() or "Unkown error.")
             return False
 
+        # Update path and status bar
         self.current_path = path
         self.status.showMessage(f"Saved: {os.path.basename(path)}")
         return True
+
 
     def open_file(self):
 

@@ -5,9 +5,13 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="3d484651-8040-42ef-b6b3-7b2286c5c8bf" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/Paint++/Filters.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Paint++/Filters.py" beforeDir="false" afterPath="$PROJECT_DIR$/Paint++/Filters.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Paint++/SelectionManager.py" beforeDir="false" afterPath="$PROJECT_DIR$/Paint++/SelectionManager.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Paint++/image_menu_functions.py" beforeDir="false" afterPath="$PROJECT_DIR$/Paint++/image_menu_functions.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Paint++/img_canvas.py" beforeDir="false" afterPath="$PROJECT_DIR$/Paint++/img_canvas.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Paint++/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/Paint++/main.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Paint++/selection_tools_functions.py" beforeDir="false" afterPath="$PROJECT_DIR$/Paint++/selection_tools_functions.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -24,7 +28,7 @@
   <component name="Git.Settings">
     <option name="RECENT_BRANCH_BY_REPOSITORY">
       <map>
-        <entry key="$PROJECT_DIR$" value="main" />
+        <entry key="$PROJECT_DIR$" value="merge/integrate-and-petter-brush" />
       </map>
     </option>
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
@@ -56,6 +60,7 @@
     &quot;Python._pydev_execfile.executor&quot;: &quot;Run&quot;,
     &quot;Python.clipboard_functions.executor&quot;: &quot;Run&quot;,
     &quot;Python.image_menu.executor&quot;: &quot;Run&quot;,
+    &quot;Python.image_menu_functions.executor&quot;: &quot;Run&quot;,
     &quot;Python.img_canvas.executor&quot;: &quot;Run&quot;,
     &quot;Python.main.executor&quot;: &quot;Run&quot;,
     &quot;Python.selection tools.executor&quot;: &quot;Run&quot;,
@@ -63,7 +68,7 @@
     &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
     &quot;RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252&quot;: &quot;true&quot;,
     &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
-    &quot;git-widget-placeholder&quot;: &quot;integrate/petter-brush+selection&quot;,
+    &quot;git-widget-placeholder&quot;: &quot;main&quot;,
     &quot;junie.onboarding.icon.badge.shown&quot;: &quot;true&quot;,
     &quot;last_opened_file_path&quot;: &quot;C:/Users/pette/IKT213_Group_1_Paint-Plus-Plus/Paint++&quot;,
     &quot;settings.editor.selected.configurable&quot;: &quot;com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable&quot;,
